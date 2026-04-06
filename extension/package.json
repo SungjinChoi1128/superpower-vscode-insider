@@ -3,6 +3,8 @@
   "displayName": "SP Superpowers",
   "description": "Superpowers workflow skills for GitHub Copilot Chat",
   "version": "1.0.0",
+  "publisher": "sp-superpowers",
+  "repository": { "type": "git", "url": "https://github.com/superpower/superpower-vscode-insider" },
   "engines": { "vscode": "^1.108.0" },
   "categories": ["AI"],
   "activationEvents": ["onStartupFinished"],

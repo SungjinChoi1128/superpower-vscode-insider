@@ -53,6 +53,8 @@ foreach ($item in $items) {
     $src = Join-Path $RepoRoot $item
     $dst = Join-Path $CopilotRoot $item
     if (Test-Path $src) {
+        # Remove existing destination to avoid nested copies
+        if (Test-Path $dst) { Remove-Item -Path $dst -Recurse -Force }
         Copy-Item -Path $src -Destination $dst -Recurse -Force
     }
 }
