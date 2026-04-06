@@ -17,11 +17,12 @@ Do NOT write any code or implementation until design is approved.
 
 ### 1. Explore Project Context
 
-Before asking anything, run:
-```
-git log --oneline -10
-git status
-```
+**IMPORTANT:** Git log and status have been automatically captured for this session. They are included in your context below. Display this context clearly to the user by saying:
+
+> "Based on the project context I can see: [summarize what you found - current branch, recent commits, any relevant files]"
+
+Then ask your first clarifying question.
+
 Read relevant docs: README.md, any docs/ folder, existing pipeline configs, DAB configs.
 Understand what exists before proposing anything new.
 
