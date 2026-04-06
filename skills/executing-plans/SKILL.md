@@ -13,11 +13,10 @@ Execute a written implementation plan with checkpoints.
 
 ## Before Starting
 
-Read the plan document in full. Then check:
-```
-git log --oneline -5
-git status
-```
+**IMPORTANT:** Git context has been auto-captured for this session. Display what you found:
+
+> "I can see we are on branch: [X], with recent commits: [Y]. The git status shows: [Z]"
+
 Confirm you are on the correct branch. Confirm no uncommitted changes.
 
 ## Execution Process

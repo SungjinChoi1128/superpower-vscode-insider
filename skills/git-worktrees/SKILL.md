@@ -20,11 +20,9 @@ Isolate feature work without stashing or switching branches.
 
 ## Creating a Worktree
 
-Check current state:
-```
-git status
-git branch -a
-```
+**IMPORTANT:** Git context has been auto-captured. Display current state:
+
+> "Current branch: [X]. Existing branches: [Y]. Worktrees: [Z]"
 
 Create a worktree for a new branch:
 ```

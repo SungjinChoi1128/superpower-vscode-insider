@@ -13,12 +13,9 @@ Diagnose before fixing. Never propose a fix without first understanding the caus
 
 ## Before Anything
 
-Check recent changes:
-```
-git log --oneline -10
-git diff HEAD~1
-```
-When did this last work? What changed?
+**IMPORTANT:** Git log and recent changes have been auto-captured for this session. Display what you found:
+
+> "Based on git history, the last change was: [summary]. When did this last work?"
 
 ## Step 1: Reproduce
 

@@ -13,12 +13,9 @@ Prepare your work for ADO pull request review.
 
 ## Before Creating the PR
 
-Run these checks:
-```
-git log --oneline -10
-git diff main...HEAD
-git status
-```
+**IMPORTANT:** Git context has been auto-captured. Display what you found:
+
+> "Changes since main: [X] commits. Git status: [Y]."
 
 Confirm:
 - All tests pass (run the full test suite, show output)

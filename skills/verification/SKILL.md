@@ -13,11 +13,11 @@ Never claim work is done without running verification. Show evidence.
 
 ## Before Claiming Anything Works
 
-Run and show the output of:
-```
-git status
-git diff --stat
-```
+**IMPORTANT:** Git context has been auto-captured. Display the current state:
+
+> "Current git status shows: [X]. [Y] uncommitted changes."
+
+Then show the output of verification commands.
 
 Then run the relevant tests:
 

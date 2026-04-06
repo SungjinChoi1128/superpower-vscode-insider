@@ -13,12 +13,11 @@ Complete your branch and create an ADO pull request.
 
 ## Before Creating the PR
 
-Run these checks:
-```
-git log --oneline main..HEAD
-git diff main...HEAD --stat
-git status
-```
+**IMPORTANT:** Git context has been auto-captured. Display what you found:
+
+> "This branch is: [X]. Commits since main: [count]. Git status: [Y]."
+
+Run these checks (if not already shown):
 
 Confirm:
 - All commits are on this branch (not accidentally on main)

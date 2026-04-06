@@ -15,11 +15,10 @@ knows the tools but not the codebase or domain.
 
 ## Before Writing
 
-Check project context:
-```
-git log --oneline -10
-git status
-```
+**IMPORTANT:** Git context has been auto-captured. Display what you found:
+
+> "Based on recent commits, this project uses: [tech stack clues from commits]. Current branch: [X]"
+
 Read the spec document. Understand what already exists.
 
 ## Plan Structure
