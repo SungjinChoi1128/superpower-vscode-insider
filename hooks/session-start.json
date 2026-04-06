@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "command": "python3 ~/.copilot/scripts/inject-memory.py",
+        "timeout": 5
+      }
+    ]
+  }
+}

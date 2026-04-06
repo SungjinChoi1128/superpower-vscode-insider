@@ -1,0 +1,62 @@
+{
+  "name": "sp-superpowers",
+  "displayName": "SP Superpowers",
+  "description": "Superpowers workflow skills for GitHub Copilot Chat",
+  "version": "1.0.0",
+  "engines": { "vscode": "^1.108.0" },
+  "categories": ["AI"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "chatParticipants": [
+      {
+        "id": "sp.assistant",
+        "name": "sp",
+        "fullName": "SP Superpowers",
+        "description": "Invoke superpowers workflow skills",
+        "isSticky": false,
+        "commands": [
+          { "name": "brainstorm", "description": "Design before building" },
+          { "name": "write-plan", "description": "Create implementation plan" },
+          { "name": "execute-plan", "description": "Execute a written plan" },
+          { "name": "tdd", "description": "Test-driven development workflow" },
+          { "name": "debug", "description": "Systematic debugging" },
+          { "name": "request-review", "description": "Prepare ADO PR" },
+          { "name": "receive-review", "description": "Handle code review feedback" },
+          { "name": "verify", "description": "Verify before claiming done" },
+          { "name": "finish-branch", "description": "Complete branch and create ADO PR" },
+          { "name": "worktree", "description": "Isolate work with git worktrees" },
+          { "name": "write-skill", "description": "Create a new skill" },
+          { "name": "simplify", "description": "Review code for quality" }
+        ]
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "spSkillBrowser",
+          "name": "SP Skills",
+          "icon": "$(sparkle)"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "sp.newSkill",
+        "title": "SP: New Skill",
+        "category": "SP Superpowers"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.108.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0",
+    "@vscode/vsce": "^2.24.0"
+  }
+}
