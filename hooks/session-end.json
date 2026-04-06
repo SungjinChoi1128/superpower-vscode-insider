@@ -3,7 +3,7 @@
     "sessionEnd": [
       {
         "type": "command",
-        "command": "python ~/.copilot/scripts/extract-memory.py",
+        "command": "python %USERPROFILE%\\.copilot\\scripts\\extract-memory.py",
         "timeout": 15
       }
     ]

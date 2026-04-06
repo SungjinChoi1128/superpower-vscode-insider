@@ -3,7 +3,7 @@
     "sessionStart": [
       {
         "type": "command",
-        "command": "python ~/.copilot/scripts/inject-memory.py",
+        "command": "python %USERPROFILE%\\.copilot\\scripts\\inject-memory.py",
         "timeout": 5
       }
     ]
