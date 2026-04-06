@@ -78,6 +78,7 @@ databricks bundle deploy --target dev
 
 ## After Writing
 
-Offer execution options:
-1. Subagent-driven (recommended): fresh subagent per task
-2. Inline: execute in this session with `@sp /execute-plan`
+After the plan is created and saved, you MUST explicitly:
+1. Summarize the plan (number of tasks, estimated time)
+2. Tell the user: "Plan is ready! To execute, type `@sp /execute-plan`"
+3. Do NOT start executing — wait for user to invoke the next skill

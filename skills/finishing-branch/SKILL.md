@@ -64,3 +64,5 @@ PR description template:
 
 Move the ADO work item to "In Review" status.
 Notify reviewers in Teams/email if required by team process.
+
+When feedback arrives, tell the user: "When you receive review feedback, type `@sp /receive-review` to process it with the two-stage review method."

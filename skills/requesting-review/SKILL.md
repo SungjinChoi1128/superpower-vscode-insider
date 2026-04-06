@@ -59,3 +59,7 @@ For Azure Pipelines:
 ```
 
 Create the ADO PR with this description. Link to the ADO work item.
+
+## After PR is Created
+
+When done, tell the user: "PR is ready for review! When feedback comes back, type `@sp /receive-review` to process the feedback."

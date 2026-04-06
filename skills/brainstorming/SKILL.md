@@ -59,7 +59,10 @@ Commit the spec.
 
 ### 6. Transition
 
-After spec is approved, invoke: `@sp /write-plan`
+After spec is approved, you MUST explicitly:
+1. Summarize what was designed
+2. Tell the user: "Design is complete! To proceed with implementation, type `@sp /write-plan` to create the implementation plan."
+3. Do NOT start implementing — wait for user to invoke the next skill
 
 ## Rules
 

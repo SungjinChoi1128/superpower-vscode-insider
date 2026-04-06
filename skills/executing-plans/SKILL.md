@@ -19,6 +19,10 @@ Execute a written implementation plan with checkpoints.
 
 Confirm you are on the correct branch. Confirm no uncommitted changes.
 
+**Ask the user:** "What is the path to the implementation plan you want to execute?" (e.g., `docs/superpowers/plans/2026-04-06-my-feature.md`)
+
+Read the plan document in full before proceeding.
+
 ## Execution Process
 
 For each task in the plan:
@@ -54,3 +58,5 @@ Wait for user guidance before proceeding.
 
 Run the full test suite. Show output.
 Invoke: `@sp /verify`
+
+When verification passes, tell the user: "All tasks complete! To finish, type `@sp /finish-branch` to create the PR."

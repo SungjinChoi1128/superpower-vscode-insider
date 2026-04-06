@@ -3,46 +3,66 @@ name: receiving-review
 description: >
   Use when receiving code review feedback on an ADO pull request or code review.
   Use before implementing any suggested changes. Requires technical rigor —
-  verify suggestions are correct before applying them.
+  verify suggestions are correct before applying them. Two-stage review: spec
+  compliance first, then code quality.
 manualInvoke: false
 ---
 
-# Receiving Code Review
+# Receiving Code Review — Two-Stage Review Process
 
 Evaluate feedback before implementing it. Not all review comments are correct.
 
-## Before Responding
+## Stage 1: Spec Compliance Review
 
-Read ALL comments first before changing anything.
-Group them: must-fix, should-fix, consider, disagree.
+**First, verify the spec compliance.** Before considering ANY code quality suggestions:
 
-## For Each Suggestion
+1. **Read the spec** — Pull up `docs/superpowers/specs/` for the feature being reviewed
+2. **List all review comments** — Get the full list from the PR
+3. **Categorize each comment:**
 
-Before implementing:
-1. **Understand it** — what problem is the reviewer solving?
-2. **Verify it** — is the suggestion technically correct for this codebase?
-3. **Check for side effects** — does applying it break anything?
+| Category | Meaning |
+|----------|---------|
+| **Spec Violation** | Implementation doesn't match the approved spec |
+| **Code Quality** | Works correctly but could be cleaner/better |
+| **Suggestion** | Nice to have but not required |
+| **Disagree** | Reviewer is incorrect or misunderstanding something |
 
-For DE-specific suggestions, verify:
-- PySpark API suggestions: confirm the API exists in the installed Spark version
-- SQL rewrites: test performance with `EXPLAIN` or query stats before accepting
-- Schema changes: trace all downstream consumers before agreeing
+### For Spec Violations
+- Acknowledge: "You're right, this violates the spec"
+- Fix it — this is non-negotiable
 
-## Responding
+### For Code Quality / Suggestions
+- Verify: Is this technically correct?
+- Check side effects: Does fixing this break anything?
+- If correct and beneficial: implement, test, commit
+- If unsure: ask clarifying question
+- If disagree: provide evidence and discuss
 
-For suggestions you agree with: implement, test, commit.
-
-For suggestions you disagree with:
+### For Disagreements
 - Respond with specific technical reasoning
 - Provide evidence (docs link, benchmark, counter-example)
-- Do not change code just to avoid conflict
+- Do NOT change code just to avoid conflict
 
-For suggestions you are unsure about:
-- Ask a clarifying question on the PR
-- Do not implement until you understand
+## Stage 2: Code Quality Review
 
-## After Implementing All Changes
+After all spec violations are resolved, do a final code quality sweep:
+
+- [ ] DRY — any duplicated logic that could be a utility?
+- [ ] YAGNI — any code handling scenarios that can't happen?
+- [ ] Readability — clear names, broken-down steps, no magic numbers?
+- [ ] Edge cases — null handling, error cases covered?
+
+## Response Template
+
+For each comment, respond with one of:
+
+- **"Done — [what you fixed]"** — You agreed and fixed it
+- **"Discussed — [your reasoning]"** — You disagreed with evidence
+- **"Deferring — [reason]"** — You'll address in a follow-up
+- **"Spec change needed"** — This requires updating the spec first
+
+## After All Comments Addressed
 
 Run full test suite. Show output.
-Reply to each comment: "Done — [what you did]" or "Discussed — [resolution]".
+Reply to each comment with resolution.
 Invoke `@sp /verify` before marking PR ready.

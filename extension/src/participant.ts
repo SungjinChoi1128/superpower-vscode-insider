@@ -18,6 +18,8 @@ const COMMAND_TO_SKILL: Record<string, string> = {
     'simplify': 'simplify',
 };
 
+const WORKTREE_COMMANDS = new Set(['worktree', 'wt']);
+
 export function registerSpParticipant(
     context: vscode.ExtensionContext,
     skillsRoot: string
@@ -25,7 +27,14 @@ export function registerSpParticipant(
     const participant = vscode.chat.createChatParticipant(
         'sp.assistant',
         async (request, _chatContext, stream, token) => {
-            const skillName = COMMAND_TO_SKILL[request.command ?? ''];
+            const command = request.command ?? '';
+            const skillName = COMMAND_TO_SKILL[command];
+
+            // Handle worktree commands specially - they execute directly
+            if (WORKTREE_COMMANDS.has(command)) {
+                await handleWorktreeCommand(request, stream);
+                return;
+            }
 
             if (!skillName) {
                 stream.markdown('Unknown command. Available skills:\n');
@@ -82,7 +91,6 @@ function getMemoryRoot(): string {
 }
 
 function loadMemory(memoryRoot: string): string {
-    // Load memory index
     const indexPath = path.join(memoryRoot, 'MEMORY.md');
     if (!fs.existsSync(indexPath)) {
         return '';
@@ -90,7 +98,6 @@ function loadMemory(memoryRoot: string): string {
 
     let memory = `## Your Memory (from ~/.copilot/memory/MEMORY.md)\n\n${fs.readFileSync(indexPath, 'utf-8')}`;
 
-    // Also load individual memory files
     const types = ['user', 'feedback', 'project', 'reference'];
     for (const type of types) {
         const typeDir = path.join(memoryRoot, type);
@@ -130,12 +137,10 @@ async function getGitContext(): Promise<string> {
             }
         };
 
-        // Use cwd to set working directory
         const execOptions: ExecOptions = {
             cwd: workspacePath
         };
 
-        // Run git log
         exec('git log --oneline -10', execOptions, (err, stdout, stderr) => {
             if (err) {
                 results.push(`## git log\nError: ${err.message}`);
@@ -146,7 +151,6 @@ async function getGitContext(): Promise<string> {
             checkDone();
         });
 
-        // Run git status
         exec('git status', execOptions, (err, stdout, stderr) => {
             if (err) {
                 results.push(`## git status\nError: ${err.message}`);
@@ -157,4 +161,75 @@ async function getGitContext(): Promise<string> {
             checkDone();
         });
     });
+}
+
+async function handleWorktreeCommand(request: vscode.ChatRequest, stream: vscode.ChatResponseStream): Promise<void> {
+    const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    if (!workspacePath) {
+        stream.markdown('No workspace folder open.');
+        return;
+    }
+
+    const prompt = request.prompt.trim();
+
+    if (prompt.startsWith('list')) {
+        exec('git worktree list', { cwd: workspacePath }, (err, stdout, stderr) => {
+            if (err) {
+                stream.markdown(`Error listing worktrees: ${err.message}`);
+            } else {
+                const output = typeof stdout === 'string' ? stdout.trim() : '';
+                stream.markdown(`## Git Worktrees\n\n\`\`\`\n${output}\n\`\`\`\n`);
+            }
+        });
+        return;
+    }
+
+    if (prompt.startsWith('remove ') || prompt.startsWith('delete ')) {
+        const parts = prompt.split(' ');
+        const worktreeName = parts[1];
+        if (!worktreeName) {
+            stream.markdown('Please specify the worktree to remove. Usage: `@sp /worktree remove <name>`');
+            return;
+        }
+        exec(`git worktree remove ../${worktreeName}`, { cwd: workspacePath }, (err, stdout, stderr) => {
+            if (err) {
+                stream.markdown(`Error removing worktree: ${err.message}`);
+            } else {
+                stream.markdown(`Worktree '${worktreeName}' removed successfully.`);
+            }
+        });
+        return;
+    }
+
+    if (prompt.startsWith('create ') || prompt.startsWith('new ')) {
+        const parts = prompt.split(' ').filter(p => p.trim());
+        const worktreeName = parts[1];
+        const branch = parts[2] === '-b' ? parts[3] : undefined;
+
+        if (!worktreeName) {
+            stream.markdown(`## Create Git Worktree\n\nUsage: \`@sp /worktree create <name> [-b <branch-name>]\`\n\nExamples:\n- \`@sp /worktree create my-feature -b feature/my-feature\` — create new branch\n- \`@sp /worktree create my-feature main\` — from existing main branch`);
+            return;
+        }
+
+        const branchName = branch || `feature/${worktreeName}`;
+        const worktreePath = `../${worktreeName}`;
+
+        exec(`git worktree list`, { cwd: workspacePath }, (err, stdout) => {
+            if (stdout && stdout.includes(worktreeName)) {
+                stream.markdown(`Worktree '${worktreeName}' already exists at ${worktreePath}`);
+                return;
+            }
+
+            exec(`git worktree add ${worktreePath} -b ${branchName}`, { cwd: workspacePath }, (err, stdout, stderr) => {
+                if (err) {
+                    stream.markdown(`Error creating worktree: ${err.message}\n\n\`\`\`\n${stderr}\n\`\`\``);
+                } else {
+                    stream.markdown(`## Worktree Created Successfully\n\n**Location:** \`${worktreePath}\`\n**Branch:** \`${branchName}\`\n\nTo open in VS Code:\n\`\`\`\ncode "${worktreePath}"\n\`\`\``);
+                }
+            });
+        });
+        return;
+    }
+
+    stream.markdown(`## Git Worktrees\n\nManage isolated worktrees for feature development.\n\n**Commands:**\n- \`@sp /worktree list\` — Show all worktrees\n- \`@sp /worktree create <name> [-b <branch>]\` — Create new worktree with branch\n- \`@sp /worktree remove <name>\` — Remove a worktree`);
 }
