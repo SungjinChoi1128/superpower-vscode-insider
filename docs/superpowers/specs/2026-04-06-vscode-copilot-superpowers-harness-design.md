@@ -29,9 +29,13 @@ Works globally across all projects and repositories — not tied to any specific
 
 ## Prerequisites
 
-**Windows-specific:** All hook scripts run as bash. This requires **WSL2 or Git Bash** installed and accessible from VS Code's shell context. The `setup.sh` bootstrap script is also a bash script. Python must be accessible from the same shell context as `python ~/.copilot/scripts/extract-memory.py`.
+**Windows 11:** The only runtime prerequisite is **Python 3.8+** accessible on the system PATH. No WSL2, no Git Bash, no bash required.
 
-`setup.sh` checks for these dependencies at startup and exits with a clear error if they are missing.
+- All memory scripts are Python (`.py`) — run natively on Windows
+- Setup and teardown are PowerShell (`.ps1`) — native on Windows 11
+- Hook commands invoke `python` directly
+
+`setup.ps1` checks that Python is accessible and exits with a clear error if not.
 
 ---
 
@@ -64,7 +68,7 @@ Four layers:
 │  Memory System  (~/.copilot/memory/)                │
 │  - MEMORY.md (user, feedback, project, reference)   │
 │  - extract-memory.py (marker parser)                │
-│  - inject-memory.sh (context injector)              │
+│  - inject-memory.py (context injector)              │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -139,14 +143,14 @@ Every skill replicates its superpowers equivalent's project context gathering. S
   "hooks": {
     "sessionStart": [{
       "type": "command",
-      "command": "bash ~/.copilot/scripts/inject-memory.sh",
+      "command": "python ~/.copilot/scripts/inject-memory.py",
       "timeout": 5
     }]
   }
 }
 ```
 
-**Script:** `~/.copilot/scripts/inject-memory.sh`
+**Script:** `~/.copilot/scripts/inject-memory.py`
 
 Reads `~/.copilot/memory/MEMORY.md` and writes to stdout the JSON context injection payload:
 ```json
@@ -156,7 +160,7 @@ Reads `~/.copilot/memory/MEMORY.md` and writes to stdout the JSON context inject
 ```
 
 - `additionalInstructions` value is a string (not array)
-- Script exits 0 on success, 1 if memory file does not exist (treated as no-op by hook runner)
+- Script exits 0 on success, exits non-zero if memory file does not exist (treated as no-op by hook runner)
 - Invalid JSON output causes hook runner to log a warning and skip injection
 
 ### sessionEnd Hook
@@ -334,27 +338,27 @@ Single git repo cloned to `~/.copilot/`:
 │   ├── sp-bootstrap.instructions.md
 │   └── memory.instructions.md
 ├── scripts/
-│   ├── inject-memory.sh
+│   ├── inject-memory.py
 │   └── extract-memory.py
 ├── extension/
 │   ├── package.json
 │   ├── src/
 │   └── tsconfig.json
-├── setup.sh
-├── teardown.sh
+├── setup.ps1
+├── teardown.ps1
 └── README.md
 ```
 
-### setup.sh (one-time)
-1. Checks prerequisites: WSL2/Git Bash, Python accessible from shell
+### setup.ps1 (one-time)
+1. Checks prerequisite: Python 3.8+ accessible on PATH
 2. Creates `~/.copilot/memory/` directory structure and empty `MEMORY.md`
 3. Registers hooks with VS Code Insider
 4. Adds `chat.agentSkillsLocations` and related settings to VS Code user settings
 5. Adds instruction files to `github.copilot.chat.codeGeneration.instructions`
 6. Builds and installs extension as local VSIX
 
-### teardown.sh (rollback)
-Reverses all changes made by `setup.sh`: removes VS Code settings entries, uninstalls VSIX, leaves `~/.copilot/memory/` intact (user data). Documents manual steps if automation is incomplete.
+### teardown.ps1 (rollback)
+Reverses all changes made by `setup.ps1`: removes VS Code settings entries, uninstalls VSIX, leaves `~/.copilot/memory/` intact (user data). Documents manual steps if automation is incomplete.
 
 ### VS Code Settings (applied by setup.sh)
 ```json
@@ -371,7 +375,7 @@ Reverses all changes made by `setup.sh`: removes VS Code settings entries, unins
 
 ### Updating
 - Skills/hooks/scripts/instructions: `git pull` in `~/.copilot/` — no reinstall needed
-- Extension changes only: re-run `setup.sh`
+- Extension changes only: re-run `setup.ps1`
 - Skills library versioning: user modifications to SKILL.md files should be made in a personal fork or branch to avoid merge conflicts on `git pull`
 
 ---
@@ -380,8 +384,8 @@ Reverses all changes made by `setup.sh`: removes VS Code settings entries, unins
 
 1. **Pilot phase** — Validate hook API shape (`sessionStart`/`sessionEnd` JSON contracts, `additionalInstructions` key, `transcript_path`). Validate `chat.tools.edits.autoApprove` setting. Document actual API behaviour before writing any scripts.
 2. **Skills library** — Write all 15 SKILL.md files + 2 instruction files
-3. **Memory scripts** — `inject-memory.sh` + `extract-memory.py` using confirmed API contracts from pilot
+3. **Memory scripts** — `inject-memory.py` + `extract-memory.py` using confirmed API contracts from pilot
 4. **Hook config files** — `session-start.json` + `session-end.json`
 5. **VS Code extension** — participant, browser, scaffolder
-6. **setup.sh / teardown.sh**
+6. **setup.ps1 / teardown.ps1**
 7. **End-to-end test** — full session: memory injection at start, workflow skill invocation, memory extraction at end
