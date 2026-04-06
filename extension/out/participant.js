@@ -37,6 +37,7 @@ exports.registerSpParticipant = registerSpParticipant;
 const vscode = __importStar(require("vscode"));
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
+const child_process_1 = require("child_process");
 const COMMAND_TO_SKILL = {
     'brainstorm': 'brainstorming',
     'write-plan': 'writing-plans',
@@ -71,9 +72,11 @@ function registerSpParticipant(context, skillsRoot) {
             stream.markdown('No language model available.');
             return;
         }
+        // Run git commands to get project context
+        const gitContext = await getGitContext();
         const memoryContent = loadMemory(getMemoryRoot());
         const messages = [
-            vscode.LanguageModelChatMessage.User(`${memoryContent}\n\n---\n\nYou are following the "${skillName}" skill. Here are the skill instructions:\n\n${skillContent}\n\n---\n\nUser request: ${request.prompt}`)
+            vscode.LanguageModelChatMessage.User(`${memoryContent}\n\n---\n\n## Project Context\n\n${gitContext}\n\n---\n\nYou are following the "${skillName}" skill. Here are the skill instructions:\n\n${skillContent}\n\n---\n\nUser request: ${request.prompt}`)
         ];
         const response = await models[0].sendRequest(messages, {}, token);
         for await (const chunk of response.text) {
@@ -122,5 +125,37 @@ function loadMemory(memoryRoot) {
         }
     }
     return memory;
+}
+async function getGitContext() {
+    return new Promise((resolve) => {
+        const results = [];
+        let completed = 0;
+        const checkDone = () => {
+            completed++;
+            if (completed === 2) {
+                resolve(results.join('\n'));
+            }
+        };
+        // Run git log
+        (0, child_process_1.exec)('git log --oneline -10', { cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath }, (err, stdout) => {
+            if (err) {
+                results.push('git log: (not a git repo or git not available)');
+            }
+            else {
+                results.push(`## git log --oneline -10\n${stdout.trim()}`);
+            }
+            checkDone();
+        });
+        // Run git status
+        (0, child_process_1.exec)('git status', { cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath }, (err, stdout) => {
+            if (err) {
+                results.push('git status: (not a git repo or git not available)');
+            }
+            else {
+                results.push(`## git status\n${stdout.trim()}`);
+            }
+            checkDone();
+        });
+    });
 }
 //# sourceMappingURL=participant.js.map

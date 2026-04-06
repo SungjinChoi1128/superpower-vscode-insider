@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import { exec } from 'child_process';
 
 const COMMAND_TO_SKILL: Record<string, string> = {
     'brainstorm': 'brainstorming',
@@ -46,10 +47,13 @@ export function registerSpParticipant(
                 return;
             }
 
+            // Run git commands to get project context
+            const gitContext = await getGitContext();
+
             const memoryContent = loadMemory(getMemoryRoot());
             const messages = [
                 vscode.LanguageModelChatMessage.User(
-                    `${memoryContent}\n\n---\n\nYou are following the "${skillName}" skill. Here are the skill instructions:\n\n${skillContent}\n\n---\n\nUser request: ${request.prompt}`
+                    `${memoryContent}\n\n---\n\n## Project Context\n\n${gitContext}\n\n---\n\nYou are following the "${skillName}" skill. Here are the skill instructions:\n\n${skillContent}\n\n---\n\nUser request: ${request.prompt}`
                 )
             ];
 
@@ -107,4 +111,38 @@ function loadMemory(memoryRoot: string): string {
     }
 
     return memory;
+}
+
+async function getGitContext(): Promise<string> {
+    return new Promise((resolve) => {
+        const results: string[] = [];
+        let completed = 0;
+
+        const checkDone = () => {
+            completed++;
+            if (completed === 2) {
+                resolve(results.join('\n'));
+            }
+        };
+
+        // Run git log
+        exec('git log --oneline -10', { cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath }, (err, stdout) => {
+            if (err) {
+                results.push('git log: (not a git repo or git not available)');
+            } else {
+                results.push(`## git log --oneline -10\n${stdout.trim()}`);
+            }
+            checkDone();
+        });
+
+        // Run git status
+        exec('git status', { cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath }, (err, stdout) => {
+            if (err) {
+                results.push('git status: (not a git repo or git not available)');
+            } else {
+                results.push(`## git status\n${stdout.trim()}`);
+            }
+            checkDone();
+        });
+    });
 }
