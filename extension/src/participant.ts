@@ -46,9 +46,10 @@ export function registerSpParticipant(
                 return;
             }
 
+            const memoryContent = loadMemory(getMemoryRoot());
             const messages = [
                 vscode.LanguageModelChatMessage.User(
-                    `You are following the "${skillName}" skill. Here are the skill instructions:\n\n${skillContent}\n\n---\n\nUser request: ${request.prompt}`
+                    `${memoryContent}\n\n---\n\nYou are following the "${skillName}" skill. Here are the skill instructions:\n\n${skillContent}\n\n---\n\nUser request: ${request.prompt}`
                 )
             ];
 
@@ -69,4 +70,41 @@ function loadSkill(skillsRoot: string, skillName: string): string | null {
         return null;
     }
     return fs.readFileSync(skillPath, 'utf-8');
+}
+
+function getMemoryRoot(): string {
+    const homeDir = process.env.USERPROFILE || process.env.HOME || '';
+    return path.join(homeDir, '.copilot', 'memory');
+}
+
+function loadMemory(memoryRoot: string): string {
+    // Load memory index
+    const indexPath = path.join(memoryRoot, 'MEMORY.md');
+    if (!fs.existsSync(indexPath)) {
+        return '';
+    }
+
+    let memory = `## Your Memory (from ~/.copilot/memory/MEMORY.md)\n\n${fs.readFileSync(indexPath, 'utf-8')}`;
+
+    // Also load individual memory files
+    const types = ['user', 'feedback', 'project', 'reference'];
+    for (const type of types) {
+        const typeDir = path.join(memoryRoot, type);
+        if (fs.existsSync(typeDir)) {
+            try {
+                const files = fs.readdirSync(typeDir);
+                for (const file of files) {
+                    if (file.endsWith('.md')) {
+                        const filePath = path.join(typeDir, file);
+                        const content = fs.readFileSync(filePath, 'utf-8');
+                        memory += `\n\n## ${type}/${file}\n${content}`;
+                    }
+                }
+            } catch {
+                // Skip if can't read directory
+            }
+        }
+    }
+
+    return memory;
 }

@@ -38,3 +38,16 @@ User mentions they are migrating MSSQL to Databricks Lakehouse:
 ```
 <!-- MEMORY: {"type": "project", "content": "Active project: MSSQL to Databricks Lakehouse migration. Tech stack: Azure DevOps, Databricks, MSSQL, DAB, Azure Pipelines.", "file": "current.md"} -->
 ```
+
+## How Memory Works
+
+At the END of each session, memory markers are extracted from the conversation transcript and written to persistent memory files.
+
+To RECALL memories: The @sp assistant automatically reads your memory files at the start of each session. When you invoke a skill with `@sp /skill-name`, your memories are included in the conversation context automatically.
+
+Memory files are stored at:
+- `~/.copilot/memory/MEMORY.md` — index of all memories
+- `~/.copilot/memory/user/` — user profile and preferences
+- `~/.copilot/memory/feedback/` — corrections and guidance
+- `~/.copilot/memory/project/` — project context and goals
+- `~/.copilot/memory/reference/` — external system locations
