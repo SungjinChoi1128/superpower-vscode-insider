@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { exec } from 'child_process';
+import { exec, ExecOptions } from 'child_process';
 
 const COMMAND_TO_SKILL: Record<string, string> = {
     'brainstorm': 'brainstorming',
@@ -114,6 +114,11 @@ function loadMemory(memoryRoot: string): string {
 }
 
 async function getGitContext(): Promise<string> {
+    const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    if (!workspacePath) {
+        return 'No workspace folder open';
+    }
+
     return new Promise((resolve) => {
         const results: string[] = [];
         let completed = 0;
@@ -125,22 +130,29 @@ async function getGitContext(): Promise<string> {
             }
         };
 
+        // Use cwd to set working directory
+        const execOptions: ExecOptions = {
+            cwd: workspacePath
+        };
+
         // Run git log
-        exec('git log --oneline -10', { cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath }, (err, stdout) => {
+        exec('git log --oneline -10', execOptions, (err, stdout, stderr) => {
             if (err) {
-                results.push('git log: (not a git repo or git not available)');
+                results.push(`## git log\nError: ${err.message}`);
             } else {
-                results.push(`## git log --oneline -10\n${stdout.trim()}`);
+                const output = typeof stdout === 'string' ? stdout.trim() : '';
+                results.push(`## git log --oneline -10\n${output}`);
             }
             checkDone();
         });
 
         // Run git status
-        exec('git status', { cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath }, (err, stdout) => {
+        exec('git status', execOptions, (err, stdout, stderr) => {
             if (err) {
-                results.push('git status: (not a git repo or git not available)');
+                results.push(`## git status\nError: ${err.message}`);
             } else {
-                results.push(`## git status\n${stdout.trim()}`);
+                const output = typeof stdout === 'string' ? stdout.trim() : '';
+                results.push(`## git status\n${output}`);
             }
             checkDone();
         });

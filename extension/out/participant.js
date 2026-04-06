@@ -127,6 +127,10 @@ function loadMemory(memoryRoot) {
     return memory;
 }
 async function getGitContext() {
+    const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    if (!workspacePath) {
+        return 'No workspace folder open';
+    }
     return new Promise((resolve) => {
         const results = [];
         let completed = 0;
@@ -136,23 +140,29 @@ async function getGitContext() {
                 resolve(results.join('\n'));
             }
         };
+        // Use cwd to set working directory
+        const execOptions = {
+            cwd: workspacePath
+        };
         // Run git log
-        (0, child_process_1.exec)('git log --oneline -10', { cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath }, (err, stdout) => {
+        (0, child_process_1.exec)('git log --oneline -10', execOptions, (err, stdout, stderr) => {
             if (err) {
-                results.push('git log: (not a git repo or git not available)');
+                results.push(`## git log\nError: ${err.message}`);
             }
             else {
-                results.push(`## git log --oneline -10\n${stdout.trim()}`);
+                const output = typeof stdout === 'string' ? stdout.trim() : '';
+                results.push(`## git log --oneline -10\n${output}`);
             }
             checkDone();
         });
         // Run git status
-        (0, child_process_1.exec)('git status', { cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath }, (err, stdout) => {
+        (0, child_process_1.exec)('git status', execOptions, (err, stdout, stderr) => {
             if (err) {
-                results.push('git status: (not a git repo or git not available)');
+                results.push(`## git status\nError: ${err.message}`);
             }
             else {
-                results.push(`## git status\n${stdout.trim()}`);
+                const output = typeof stdout === 'string' ? stdout.trim() : '';
+                results.push(`## git status\n${output}`);
             }
             checkDone();
         });
