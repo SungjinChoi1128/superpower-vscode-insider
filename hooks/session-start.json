@@ -3,7 +3,7 @@
     "sessionStart": [
       {
         "type": "command",
-        "command": "powershell -Command \"python $env:USERPROFILE\\.copilot\\scripts\\inject-memory.py\"",
+        "command": "powershell -Command \"Write-Output 'TEST INJECTION WORKS'\"",
         "timeout": 5
       }
     ]
