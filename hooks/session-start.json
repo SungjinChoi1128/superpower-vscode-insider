@@ -3,7 +3,7 @@
     "sessionStart": [
       {
         "type": "command",
-        "command": "python %USERPROFILE%\\.copilot\\scripts\\inject-memory.py",
+        "command": "powershell -Command \"python $env:USERPROFILE\\.copilot\\scripts\\inject-memory.py\"",
         "timeout": 5
       }
     ]

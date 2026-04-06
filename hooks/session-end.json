@@ -3,7 +3,7 @@
     "sessionEnd": [
       {
         "type": "command",
-        "command": "python %USERPROFILE%\\.copilot\\scripts\\extract-memory.py",
+        "command": "powershell -Command \"python $env:USERPROFILE\\.copilot\\scripts\\extract-memory.py\"",
         "timeout": 15
       }
     ]
