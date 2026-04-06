@@ -28,7 +28,7 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
 # Step 1: Check Python
 Write-Step "Checking Python..."
 try {
-    $pyVersion = & python3 --version 2>&1
+    $pyVersion = & python --version 2>&1
     Write-Ok "Found: $pyVersion"
 } catch {
     Write-Fail "Python3 not found on PATH. Install Python 3.8+ and add to PATH."

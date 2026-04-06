@@ -3,7 +3,7 @@
     "sessionEnd": [
       {
         "type": "command",
-        "command": "python3 ~/.copilot/scripts/extract-memory.py",
+        "command": "python ~/.copilot/scripts/extract-memory.py",
         "timeout": 15
       }
     ]
