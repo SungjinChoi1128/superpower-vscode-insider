@@ -18,14 +18,11 @@ The following skills are available. They auto-activate based on context, or can 
 | verification | Before claiming any work is complete or passing |
 | finishing-branch | When implementation is complete and you need to create an ADO PR |
 | git-worktrees | When starting feature work that needs isolation |
-| parallel-agents | When facing 2+ independent tasks (best-effort) |
-| subagent-dev | When executing plans with independent tasks (best-effort) |
 | writing-skills | When creating new skills for this system |
 | simplify | When reviewing changed code for quality and efficiency |
 
-Two additional skills are available via auto-detection and skill browser only
-(not invocable via `@sp` — degraded, best-effort):
-- `parallel-agents` — decomposing independent parallel work
+Two skills are available via **auto-detection and skill browser only** — they are NOT invocable via `@sp` (degraded, best-effort):
+- `parallel-agents` — decomposing independent parallel work streams
 - `subagent-dev` — structured inline plan execution
 
 ## Key Principles
