@@ -22,3 +22,5 @@ Thumbs.db
 
 # Memory (local user data)
 memory/
+.sisyphus/
+fix_plan.md
