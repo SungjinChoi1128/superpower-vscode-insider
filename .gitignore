@@ -1,0 +1,24 @@
+# Build artifacts
+*.vsix
+extension/out/
+extension/node_modules/
+extension/package-lock.json
+
+# Python cache
+__pycache__/
+*.pyc
+scripts/__pycache__/
+scripts/tests/__pycache__/
+
+# IDE
+.claude/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Memory (local user data)
+memory/
