@@ -11,20 +11,19 @@ manualInvoke: false
 # Brainstorming — Design Before Building
 
 Turn ideas into fully formed designs through collaborative dialogue.
-Do NOT write any code or implementation until design is approved.
+**ABSOLUTE RULE: Do NOT read, edit, or create any files unless explicitly told to do so.**
 
 ## Process (follow in order)
 
-### 1. Explore Project Context
+### 1. Explore Project Context (DO NOT READ FILES)
 
-**IMPORTANT:** Git log and status have been automatically captured for this session. They are included in your context below. Display this context clearly to the user by saying:
+**IMPORTANT:** Git log and status have been automatically captured for this session. Display this context clearly to the user by saying:
 
-> "Based on the project context I can see: [summarize what you found - current branch, recent commits, any relevant files]"
+> "Based on the project context I can see: [current branch, recent commits]"
 
-Then ask your first clarifying question.
+**DO NOT read any files** — not README, not docs, not source code. Ask the user questions instead to understand the system.
 
-Read relevant docs: README.md, any docs/ folder, existing pipeline configs, DAB configs.
-Understand what exists before proposing anything new.
+If you need to understand something specific, ASK the user to describe it or show you the relevant code.
 
 ### 2. Ask Clarifying Questions
 
@@ -64,9 +63,17 @@ After spec is approved, you MUST explicitly:
 2. Tell the user: "Design is complete! To proceed with implementation, type `@sp /write-plan` to create the implementation plan."
 3. Do NOT start implementing — wait for user to invoke the next skill
 
-## Rules
+## Rules (Violations = Immediate Stop)
 
-- One question per message
-- NEVER write code before design is approved
-- Always explore project context first
-- For large projects covering multiple independent subsystems, decompose first
+- **NEVER read files** — not README, not docs, not source code
+- **NEVER edit files** — no creating, modifying, or deleting files
+- **NEVER write code** — no implementation until design is fully approved
+- **One question per message**
+- **Always explore via questions, not file reading**
+
+### If You Catch Yourself Wanting to Edit Code:
+Stop immediately. Say: "I'm in brainstorming mode — I should be asking questions, not editing files. Let me continue the conversation instead."
+
+## Model Behavior Note
+
+If you find yourself wanting to read files to understand the codebase, ASK the user to describe what they need instead. Reading files during brainstorming leads to scope creep and premature implementation.
