@@ -54,7 +54,7 @@ const COMMAND_TO_SKILL = {
 };
 const WORKTREE_COMMANDS = new Set(['worktree', 'wt']);
 function registerSpParticipant(context, skillsRoot) {
-    const participant = vscode.chat.createChatParticipant('sp.assistant', async (request, _chatContext, stream, token) => {
+    const participant = vscode.chat.createChatParticipant('sp.assistant', async (request, chatContext, stream, token) => {
         const command = request.command ?? '';
         const skillName = COMMAND_TO_SKILL[command];
         // Handle worktree commands specially - they execute directly
@@ -79,12 +79,31 @@ function registerSpParticipant(context, skillsRoot) {
             stream.markdown('No language model available.');
             return;
         }
+        // Write active skill file for external tracking
+        writeActiveSkillFile(skillName, 'sp.assistant');
         // Run git commands to get project context
         const gitContext = await getGitContext();
         const memoryContent = loadMemory(getMemoryRoot());
-        const messages = [
-            vscode.LanguageModelChatMessage.User(`${memoryContent}\n\n---\n\n## Project Context\n\n${gitContext}\n\n---\n\nYou are following the "${skillName}" skill. Here are the skill instructions:\n\n${skillContent}\n\n---\n\nUser request: ${request.prompt}`)
-        ];
+        // Check if this is a follow-up message in a multi-turn conversation
+        const isFollowUp = chatContext.history.length > 0;
+        let messages;
+        if (isFollowUp) {
+            // Multi-turn: include history and re-inject skill context
+            messages = [
+                // System context with skill instructions (re-injected for follow-ups)
+                vscode.LanguageModelChatMessage.User(`${memoryContent}\n\n---\n\n## Project Context\n\n${gitContext}\n\n---\n\nYou are following the "${skillName}" skill. Here are the skill instructions:\n\n${skillContent}`),
+                // Convert conversation history to LanguageModelChatMessage
+                ...convertHistoryToMessages(chatContext.history),
+                // Current user message
+                vscode.LanguageModelChatMessage.User(request.prompt)
+            ];
+        }
+        else {
+            // First turn: full context with skill and user request
+            messages = [
+                vscode.LanguageModelChatMessage.User(`${memoryContent}\n\n---\n\n## Project Context\n\n${gitContext}\n\n---\n\nYou are following the "${skillName}" skill. Here are the skill instructions:\n\n${skillContent}\n\n---\n\nUser request: ${request.prompt}`)
+            ];
+        }
         const response = await models[0].sendRequest(messages, {}, token);
         for await (const chunk of response.text) {
             stream.markdown(chunk);
@@ -100,9 +119,50 @@ function loadSkill(skillsRoot, skillName) {
     }
     return fs.readFileSync(skillPath, 'utf-8');
 }
-function getMemoryRoot() {
+function getCopilotRoot() {
     const homeDir = process.env.USERPROFILE || process.env.HOME || '';
-    return path.join(homeDir, '.copilot', 'memory');
+    return path.join(homeDir, '.copilot');
+}
+function convertHistoryToMessages(history) {
+    const messages = [];
+    for (const turn of history) {
+        if (turn instanceof vscode.ChatRequestTurn) {
+            // User message
+            messages.push(vscode.LanguageModelChatMessage.User(turn.prompt));
+        }
+        else if (turn instanceof vscode.ChatResponseTurn) {
+            // Assistant response - flatten all response parts to text
+            let responseText = '';
+            for (const part of turn.response) {
+                if (part instanceof vscode.ChatResponseMarkdownPart) {
+                    responseText += part.value.value;
+                }
+                else if (part instanceof vscode.ChatResponseAnchorPart) {
+                    // Skip anchor parts in context
+                }
+            }
+            if (responseText) {
+                messages.push(vscode.LanguageModelChatMessage.Assistant(responseText));
+            }
+        }
+    }
+    return messages;
+}
+function getMemoryRoot() {
+    return path.join(getCopilotRoot(), 'memory');
+}
+function writeActiveSkillFile(skillName, participantId) {
+    const copilotRoot = getCopilotRoot();
+    if (!fs.existsSync(copilotRoot)) {
+        fs.mkdirSync(copilotRoot, { recursive: true });
+    }
+    const activeSkillData = {
+        skill: skillName,
+        timestamp: new Date().toISOString(),
+        participantId: participantId
+    };
+    const activeSkillPath = path.join(copilotRoot, 'active-skill.json');
+    fs.writeFileSync(activeSkillPath, JSON.stringify(activeSkillData, null, 2), 'utf-8');
 }
 function loadMemory(memoryRoot) {
     const indexPath = path.join(memoryRoot, 'MEMORY.md');

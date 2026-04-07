@@ -34,7 +34,14 @@ try {
     Write-Fail "Python3 not found on PATH. Install Python 3.8+ and add to PATH."
 }
 
-# Step 2: Create memory structure
+# Step 2: Check VS Code version
+Write-Step "Checking VS Code version..."
+$vsCodeVersion = & code-insiders --version 2>&1 | Select-Object -First 1
+if ($vsCodeVersion -notmatch "1\.(9[5-9]|[0-9]{2,})\.") {
+    Write-Warning "VS Code 1.95+ recommended for agent hooks (Preview feature)"
+}
+
+# Step 3: Create memory structure
 Write-Step "Creating memory directory structure..."
 @("memory", "memory\user", "memory\feedback", "memory\project", "memory\reference") | ForEach-Object {
     $dir = Join-Path $CopilotRoot $_
@@ -46,7 +53,7 @@ if (-not (Test-Path $memoryIndex)) {
 }
 Write-Ok "Memory structure ready"
 
-# Step 3: Copy skills, hooks, instructions to ~/.copilot
+# Step 4: Copy skills, hooks, instructions to ~/.copilot
 Write-Step "Copying harness files to ~/.copilot..."
 $items = @("skills", "hooks", "instructions", "scripts")
 foreach ($item in $items) {
@@ -60,7 +67,7 @@ foreach ($item in $items) {
 }
 Write-Ok "Harness files copied"
 
-# Step 4: Update VS Code settings
+# Step 5: Update VS Code settings
 Write-Step "Updating VS Code Insider settings..."
 if (-not (Test-Path $VSCodeSettingsPath)) {
     Write-Fail "VS Code Insider settings not found at: $VSCodeSettingsPath"
@@ -74,18 +81,21 @@ $settings["github.copilot.chat.codeGeneration.instructions"] = @(
     @{ file = "$CopilotRoot\instructions\memory.instructions.md" }
 )
 $settings["chat.tools.edits.autoApprove"] = "$CopilotRoot\memory\**"
+$settings["chat.hookFilesLocations"] = @{
+    "$CopilotRoot\hooks" = $true
+}
 
 $settings | ConvertTo-Json -Depth 10 | Set-Content $VSCodeSettingsPath -Encoding UTF8
 Write-Ok "VS Code settings updated"
 
-# Step 5: Register hooks
+# Step 6: Register hooks
 # Hook registration mechanism requires VS Code Insider to discover hooks from ~/.copilot/hooks/
 # As of v1.110, hooks are preview features. VS Code may auto-discover from ~/.copilot/hooks/
 # If not, use: $settings["chat.hooksLocations"] = @("$CopilotRoot\hooks")
 Write-Step "Hook files ready at: $CopilotRoot\hooks"
 Write-Host "  ! Hook auto-discovery may require VS Code Insider restart." -ForegroundColor Yellow
 
-# Step 6: Build and install extension
+# Step 7: Build and install extension
 Write-Step "Building extension..."
 Push-Location (Join-Path $RepoRoot "extension")
 npm install --silent

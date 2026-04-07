@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "type": "command",
+        "command": "powershell -Command \"python $env:USERPROFILE\\.copilot\\scripts\\pre-tool-use.py\"",
+        "timeout": 5
+      }
+    ]
+  }
+}

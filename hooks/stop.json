@@ -1,6 +1,6 @@
 {
   "hooks": {
-    "sessionEnd": [
+    "Stop": [
       {
         "type": "command",
         "command": "powershell -Command \"python $env:USERPROFILE\\.copilot\\scripts\\extract-memory.py\"",

@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "type": "command",
+        "command": "powershell -Command \"python $env:USERPROFILE\\.copilot\\scripts\\user-prompt-submit.py\"",
+        "timeout": 5
+      }
+    ]
+  }
+}

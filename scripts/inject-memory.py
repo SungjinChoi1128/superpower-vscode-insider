@@ -1,7 +1,7 @@
 """
 sessionStart hook script.
 Reads ~/.copilot/memory/MEMORY.md and outputs JSON for VS Code hook runner.
-Output: {"additionalInstructions": "<memory content>"}
+Output: {"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": "..."}}
 """
 import json
 import sys
@@ -16,7 +16,10 @@ def build_payload(memory_path: str) -> str:
 
     content = path.read_text(encoding="utf-8")
     payload = {
-        "additionalInstructions": f"## Memory from previous sessions\n\n{content}"
+        "hookSpecificOutput": {
+            "hookEventName": "SessionStart",
+            "additionalContext": f"## Memory from previous sessions\n\n{content}"
+        }
     }
     return json.dumps(payload)
 
