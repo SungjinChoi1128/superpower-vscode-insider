@@ -1,6 +1,6 @@
 {
   "hooks": {
-    "sessionStart": [
+    "SessionStart": [
       {
         "type": "command",
         "command": "powershell -Command \"python $env:USERPROFILE\\.copilot\\scripts\\inject-memory.py\"",

@@ -74,7 +74,7 @@ if (-not (Test-Path $VSCodeSettingsPath)) {
 }
 $settings = Get-Content $VSCodeSettingsPath -Raw | ConvertFrom-Json -AsHashtable
 
-$settings["chat.agentSkillsLocations"] = @("$CopilotRoot\skills")
+$settings["chat.agentSkillsLocations"] = @("~/.copilot/skills")
 $settings["chat.useAgentSkills"] = $true
 $settings["github.copilot.chat.codeGeneration.instructions"] = @(
     @{ file = "$CopilotRoot\instructions\sp-bootstrap.instructions.md" },
@@ -82,7 +82,7 @@ $settings["github.copilot.chat.codeGeneration.instructions"] = @(
 )
 $settings["chat.tools.edits.autoApprove"] = "$CopilotRoot\memory\**"
 $settings["chat.hookFilesLocations"] = @{
-    "$CopilotRoot\hooks" = $true
+    "~/.copilot/hooks" = $true
 }
 
 $settings | ConvertTo-Json -Depth 10 | Set-Content $VSCodeSettingsPath -Encoding UTF8
