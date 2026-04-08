@@ -152,18 +152,21 @@ function isNoCodePhase(skillName, phase) {
     return config?.noCode || false;
 }
 // Code keywords that indicate user is requesting code generation
-const CODE_KEYWORDS = ['function', 'def', 'class', 'import', 'implement', 'build', 'create_file', 'write_file'];
+const CODE_KEYWORDS = ['function', 'def', 'class', 'import', 'implement', 'build', 'create_file', 'write_file', 'write code', 'generate code', 'show me code'];
 function preprocessUserPrompt(prompt, state) {
     // Check if any code keyword exists in the prompt (case insensitive)
     const promptLower = prompt.toLowerCase();
     const hasCodeKeyword = CODE_KEYWORDS.some(keyword => promptLower.includes(keyword));
     // Check if currently in a no-code phase
     const inNoCodePhase = isNoCodePhase(state.skillName, state.phase);
-    // If both conditions are true, inject warning
+    // If both conditions are true, block the request
     if (hasCodeKeyword && inNoCodePhase) {
-        return `⚠️ WARNING: You appear to be requesting code in ${state.phase} phase. DO NOT generate code yet.\n\n${prompt}`;
+        return {
+            blocked: true,
+            prompt: `BLOCKED: User requested code generation during "${state.phase}" phase. This is forbidden. User message was: ${prompt}`
+        };
     }
-    return prompt;
+    return { blocked: false, prompt };
 }
 function shouldAdvancePhase(state) {
     const config = getPhaseConfig(state.skillName, state.phase);
@@ -399,27 +402,55 @@ function registerSpParticipant(context, skillsRoot) {
                 ? `🔒 You are in the middle of the "${skillName}" skill.\n\n${getPhaseReminder(currentState)}\n\nContinue from where you left off.`
                 : `🔒 You are in the middle of the "${skillName}" skill. Continue from where you left off.`;
             // Apply input pre-processing: check for code keywords in no-code phases
-            const preprocessedPrompt = currentState
+            const preprocessed = currentState
                 ? preprocessUserPrompt(request.prompt, currentState)
-                : request.prompt;
+                : { blocked: false, prompt: request.prompt };
+            // Check if blocked - return error without calling LLM
+            if (preprocessed.blocked) {
+                const state = currentState;
+                stream.markdown(`## ⛔ Blocked
+
+${preprocessed.prompt}
+
+**Current phase:** ${state.phase}
+**Skill:** ${state.skillName}
+**Turn:** ${state.turnCount}/${getPhaseConfig(state.skillName, state.phase)?.maxTurns || '?'}
+
+Please continue with the current phase task, or use \`@sp /reset\` to start over.`);
+                return;
+            }
             messages = [
                 // System context with skill instructions (re-injected for follow-ups)
                 vscode.LanguageModelChatMessage.User(`${memoryContent}\n\n---\n\n## Project Context\n\n${gitContext}\n\n---\n\nYou are following the "${skillName}" skill. Here are the skill instructions:\n\n${skillContent}\n\n---\n\n${continuationReminder}`),
                 // Convert conversation history to LanguageModelChatMessage
                 ...convertHistoryToMessages(chatContext.history),
                 // Current user message
-                vscode.LanguageModelChatMessage.User(preprocessedPrompt)
+                vscode.LanguageModelChatMessage.User(preprocessed.prompt)
             ];
         }
         else {
             // First turn: full context with skill and user request
             const phaseReminder = currentState ? getPhaseReminder(currentState) : '';
             // Apply input pre-processing: check for code keywords in no-code phases
-            const preprocessedPrompt = currentState
+            const preprocessed = currentState
                 ? preprocessUserPrompt(request.prompt, currentState)
-                : request.prompt;
+                : { blocked: false, prompt: request.prompt };
+            // Check if blocked - return error without calling LLM
+            if (preprocessed.blocked) {
+                const state = currentState;
+                stream.markdown(`## ⛔ Blocked
+
+${preprocessed.prompt}
+
+**Current phase:** ${state.phase}
+**Skill:** ${state.skillName}
+**Turn:** ${state.turnCount}/${getPhaseConfig(state.skillName, state.phase)?.maxTurns || '?'}
+
+Please continue with the current phase task, or use \`@sp /reset\` to start over.`);
+                return;
+            }
             messages = [
-                vscode.LanguageModelChatMessage.User(`${memoryContent}\n\n---\n\n## Project Context\n\n${gitContext}\n\n---\n\nYou are following the "${skillName}" skill. Here are the skill instructions:\n\n${skillContent}${phaseReminder ? '\n\n---\n\n' + phaseReminder : ''}\n\n---\n\nUser request: ${preprocessedPrompt}`)
+                vscode.LanguageModelChatMessage.User(`${memoryContent}\n\n---\n\n## Project Context\n\n${gitContext}\n\n---\n\nYou are following the "${skillName}" skill. Here are the skill instructions:\n\n${skillContent}${phaseReminder ? '\n\n---\n\n' + phaseReminder : ''}\n\n---\n\nUser request: ${preprocessed.prompt}`)
             ];
         }
         const response = await models[0].sendRequest(messages, {}, token);
