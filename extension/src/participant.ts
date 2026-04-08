@@ -681,7 +681,7 @@ export function registerSpParticipant(
                 messages = [
                     // System context with skill instructions (re-injected for follow-ups)
                     vscode.LanguageModelChatMessage.User(
-                        `${memoryContent}\n\n---\n\n## Project Context\n\n${gitContext}\n\n---\n\nYou are following the "${skillName}" skill. Here are the skill instructions:\n\n${skillContent}\n\n---\n\n${continuationReminder}`
+                        `${memoryContent}\n\n---\n\n## Git Context\n\n${gitContext}\n\n---\n\n## 🚨 REMEMBER - YOU ARE IN PHASE: ${currentState?.phase?.toUpperCase() || 'UNKNOWN'}\n\n**Current task:** ${currentState ? getPhaseReminder(currentState).split('\n')[0] : 'Follow skill instructions'}\n\n**DO NOT:** Skip phases, write code prematurely, ignore reminders\n**DO:** Complete current phase before proceeding\n\n---\n\n## Skill Instructions:\n\n${skillContent}\n\n---\n\n${continuationReminder}`
                     ),
                     // Convert conversation history to LanguageModelChatMessage
                     ...convertHistoryToMessages(chatContext.history),
@@ -699,7 +699,7 @@ export function registerSpParticipant(
 
                 messages = [
                     vscode.LanguageModelChatMessage.User(
-                        `${memoryContent}\n\n---\n\n## Project Context\n\n${gitContext}\n\n---\n\nYou are following the "${skillName}" skill. Here are the skill instructions:\n\n${skillContent}${phaseReminder ? '\n\n---\n\n' + phaseReminder : ''}\n\n---\n\nUser request: ${preprocessedPrompt}`
+                        `${memoryContent}\n\n---\n\n## Git Context\n\n${gitContext}\n\n---\n\n## 🚨 CRITICAL INSTRUCTION\n\nYou are in **${currentState?.phase?.toUpperCase() || 'CONTEXT'}** phase.\n\n**YOUR IMMEDIATE TASK:** ${currentState?.phase === 'context' ? 'Read the context above. Ask the user ONE specific question to clarify their request. Do NOT propose solutions, do NOT write any code.' : 'Follow the skill instructions below.'}\n\n**DO NOT:** Skip to implementation, write code, propose solutions\n**DO:** Focus on the current phase task only\n\n---\n\n## Skill Instructions (MUST FOLLOW):\n\n${skillContent}${phaseReminder ? '\n\n---\n\n' + phaseReminder : ''}\n\n---\n\n## User's Message:\n${preprocessedPrompt}`
                     )
                 ];
             }
