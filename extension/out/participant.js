@@ -609,8 +609,11 @@ function registerSpParticipant(context, skillsRoot) {
         // Check if there's existing state for this skill
         const existingData = loadActiveSkillFile();
         let currentState = null;
-        // Check if this is a new skill (different from persisted)
-        const isNewSkill = !existingData || existingData.skill !== skillName;
+        // Check if this is a follow-up message in a multi-turn conversation
+        const isFollowUp = chatContext.history.length > 0;
+        // Only continue existing state if there's conversation history
+        const isContinuation = existingData && existingData.skill === skillName && isFollowUp;
+        const isNewSkill = !isContinuation;
         if (isNewSkill) {
             // Reset state for new skill
             const initialPhase = getInitialPhase(skillName);
@@ -644,8 +647,6 @@ function registerSpParticipant(context, skillsRoot) {
         // Run git commands to get project context
         const gitContext = await getGitContext();
         const memoryContent = loadMemory(getMemoryRoot());
-        // Check if this is a follow-up message in a multi-turn conversation
-        const isFollowUp = chatContext.history.length > 0;
         let messages;
         if (isFollowUp) {
             // Multi-turn: include history and re-inject skill context

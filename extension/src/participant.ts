@@ -619,8 +619,12 @@ export function registerSpParticipant(
             const existingData = loadActiveSkillFile();
             let currentState: SkillState | null = null;
 
-            // Check if this is a new skill (different from persisted)
-            const isNewSkill = !existingData || existingData.skill !== skillName;
+            // Check if this is a follow-up message in a multi-turn conversation
+            const isFollowUp = chatContext.history.length > 0;
+
+            // Only continue existing state if there's conversation history
+            const isContinuation = existingData && existingData.skill === skillName && isFollowUp;
+            const isNewSkill = !isContinuation;
 
             if (isNewSkill) {
                 // Reset state for new skill
@@ -659,9 +663,6 @@ export function registerSpParticipant(
             const gitContext = await getGitContext();
 
             const memoryContent = loadMemory(getMemoryRoot());
-
-            // Check if this is a follow-up message in a multi-turn conversation
-            const isFollowUp = chatContext.history.length > 0;
 
             let messages: vscode.LanguageModelChatMessage[];
 
