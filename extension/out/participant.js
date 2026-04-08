@@ -168,6 +168,41 @@ function shouldAdvancePhase(state) {
         return false;
     return state.turnCount >= config.maxTurns;
 }
+function validatePhaseResponse(response, state) {
+    // If no state or not a no-code phase, always valid
+    if (!state || !isNoCodePhase(state.skillName, state.phase)) {
+        return { valid: true };
+    }
+    // Check for code patterns in response
+    const codePatterns = [
+        /```[\s\S]*?```/, // Code blocks
+        /\bfunction\s+\w+/, // function declarations
+        /\bdef\s+\w+/, // Python def
+        /\bclass\s+\w+/, // Class declarations
+        /\bimport\s+\w+/, // Import statements
+        /\bimplement\s+\w+/, // Implement keyword
+        /->\s*{/, // Arrow functions
+        /\(\s*\)\s*=>\s*{/, // Lambda
+    ];
+    const violations = [];
+    for (const pattern of codePatterns) {
+        if (pattern.test(response)) {
+            violations.push(pattern.toString());
+        }
+    }
+    if (violations.length > 0) {
+        return {
+            valid: false,
+            message: `## ⛔ RESPONSE BLOCKED\n\n` +
+                `Your response contains code patterns in "${state.phase}" phase.\n\n` +
+                `**This is not allowed.** You are in a no-code phase.\n\n` +
+                `**Current phase:** ${state.phase}\n` +
+                `**Your task:** ${getPhaseReminder(state).split('\n')[0]}\n\n` +
+                `Please rewrite your response without any code.`
+        };
+    }
+    return { valid: true };
+}
 // Extract spec file path from prompt (format: docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md)
 function extractSpecFilePath(prompt) {
     const specPattern = /docs\/superpowers\/specs\/[\d]{4}-[\d]{2}-[\d]{2}-[a-zA-Z0-9-_]+\.md/;
@@ -199,14 +234,18 @@ Remember: You MUST follow this skill exactly. No exceptions.`,
             questions: (() => {
                 const questionsLeft = config.maxTurns - state.turnCount;
                 const shouldWrapUp = questionsLeft <= 1;
-                return `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+                return `## ⛔⛔⛔ ACTIVE PHASE: Clarifying Questions
 
-**Skill:** brainstorming
-**Current Phase:** ${state.phase}
-**Your Exact Task:** Ask ONE focused question. Do NOT skip to design.
-**Do NOT:** Suggest solutions, write code, ask vague or compound questions
-**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
-**Progress:** ${state.turnCount}/${config.maxTurns} - ${shouldWrapUp ? '⛔ WRAP UP - Propose approaches after this question!' : `${questionsLeft} questions remaining`}
+**PHASE GOAL:** Gather requirements through a SEQUENCE of questions
+**THIS IS A LOOP:** Ask question → get answer → ask next question
+**PROGRESS:** Question ${state.turnCount}/${config.maxTurns}
+
+**YOUR TASK:** Ask ONE focused question. Then WAIT for the answer.
+After answer: ask the NEXT question.
+**When ${config.maxTurns} questions answered:** Propose approaches.
+
+**DO NOT:** Jump to design, write code, propose solutions
+**DO:** Keep asking questions until you reach ${config.maxTurns} questions${shouldWrapUp ? '\n\n⛔ WRAP UP: After this answer, propose approaches.' : ''}
 
 Remember: You MUST follow this skill exactly. No exceptions.`;
             })(),
@@ -658,9 +697,13 @@ function registerSpParticipant(context, skillsRoot) {
             const preprocessedPrompt = currentState
                 ? preprocessUserPrompt(request.prompt, currentState)
                 : request.prompt;
+            // Add phase-specific directive for questions phase
+            const questionsDirective = currentState?.phase === 'questions'
+                ? `\n\n## 🚨 QUESTIONS PHASE - MULTIPLE TURNS\nYou are in QUESTIONS phase. Ask ONE question per turn. You have ${currentState ? (getPhaseConfig(currentState.skillName, currentState.phase)?.maxTurns || 5) - currentState.turnCount : 'several'} questions left. DO NOT jump to design or code.\n`
+                : '';
             messages = [
                 // System context with skill instructions (re-injected for follow-ups)
-                vscode.LanguageModelChatMessage.User(`${memoryContent}\n\n---\n\n## Git Context\n\n${gitContext}\n\n---\n\n## 🚨 REMEMBER - YOU ARE IN PHASE: ${currentState?.phase?.toUpperCase() || 'UNKNOWN'}\n\n**Current task:** ${currentState ? getPhaseReminder(currentState).split('\n')[0] : 'Follow skill instructions'}\n\n**DO NOT:** Skip phases, write code prematurely, ignore reminders\n**DO:** Complete current phase before proceeding\n\n---\n\n## Skill Instructions:\n\n${skillContent}\n\n---\n\n${continuationReminder}`),
+                vscode.LanguageModelChatMessage.User(`${memoryContent}\n\n---\n\n## Git Context\n\n${gitContext}${questionsDirective}\n\n---\n\n## 🚨 REMEMBER - YOU ARE IN PHASE: ${currentState?.phase?.toUpperCase() || 'UNKNOWN'}\n\n**Current task:** ${currentState ? getPhaseReminder(currentState).split('\n')[0] : 'Follow skill instructions'}\n\n**DO NOT:** Skip phases, write code prematurely, ignore reminders\n**DO:** Complete current phase before proceeding\n\n---\n\n## Skill Instructions:\n\n${skillContent}\n\n---\n\n${continuationReminder}`),
                 // Convert conversation history to LanguageModelChatMessage
                 ...convertHistoryToMessages(chatContext.history),
                 // Current user message
@@ -675,12 +718,28 @@ function registerSpParticipant(context, skillsRoot) {
                 ? preprocessUserPrompt(request.prompt, currentState)
                 : request.prompt;
             messages = [
-                vscode.LanguageModelChatMessage.User(`${memoryContent}\n\n---\n\n## Git Context\n\n${gitContext}\n\n---\n\n## 🚨 CRITICAL INSTRUCTION\n\nYou are in **${currentState?.phase?.toUpperCase() || 'CONTEXT'}** phase.\n\n**YOUR IMMEDIATE TASK:** ${currentState?.phase === 'context' ? 'Read the context above. Ask the user ONE specific question to clarify their request. Do NOT propose solutions, do NOT write any code.' : 'Follow the skill instructions below.'}\n\n**DO NOT:** Skip to implementation, write code, propose solutions\n**DO:** Focus on the current phase task only\n\n---\n\n## Skill Instructions (MUST FOLLOW):\n\n${skillContent}${phaseReminder ? '\n\n---\n\n' + phaseReminder : ''}\n\n---\n\n## User's Message:\n${preprocessedPrompt}`)
+                vscode.LanguageModelChatMessage.User(`${memoryContent}\n\n---\n\n## Git Context\n\n${gitContext}\n\n---\n\n## 🚨 CRITICAL INSTRUCTION\n\nYou are in **${currentState?.phase?.toUpperCase() || 'CONTEXT'}** phase.\n\n**YOUR IMMEDIATE TASK:** ${currentState?.phase === 'context' ? 'Read the context above. Ask the user ONE specific question to clarify their request. Do NOT propose solutions, do NOT write any code. You will ask more questions in subsequent turns.' : 'Follow the skill instructions below.'}\n\n**DO NOT:** Skip to implementation, write code, propose solutions\n**DO:** Focus on the current phase task only\n\n---\n\n## Skill Instructions (MUST FOLLOW):\n\n${skillContent}${phaseReminder ? '\n\n---\n\n' + phaseReminder : ''}\n\n---\n\n## User's Message:\n${preprocessedPrompt}`)
             ];
         }
-        const response = await models[0].sendRequest(messages, {}, token);
-        for await (const chunk of response.text) {
-            stream.markdown(chunk);
+        try {
+            const response = await models[0].sendRequest(messages, {}, token);
+            // Buffer the full response first
+            let fullResponse = '';
+            for await (const chunk of response.text) {
+                fullResponse += chunk;
+            }
+            // Validate against phase rules
+            const validation = validatePhaseResponse(fullResponse, currentState);
+            if (!validation.valid) {
+                // Block response and show corrective message
+                stream.markdown(validation.message);
+                return;
+            }
+            // Response is clean - stream it
+            stream.markdown(fullResponse);
+        }
+        catch (error) {
+            stream.markdown(`## Error\n\nSomething went wrong: ${error}`);
         }
     });
     participant.iconPath = new vscode.ThemeIcon('sparkle');
