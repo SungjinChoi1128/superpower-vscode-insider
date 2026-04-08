@@ -6,6 +6,7 @@ description: >
   PySpark transformations, dbt models, MSSQL stored procedures, Python utilities,
   and TypeScript code. Never write implementation before a failing test exists.
 manualInvoke: false
+disable-model-invocation: false
 ---
 
 # Test-Driven Development — Red, Green, Refactor

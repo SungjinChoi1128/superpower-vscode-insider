@@ -6,6 +6,7 @@ description: >
   or design something before building it. Explores intent, requirements, and design
   before any implementation begins. Required before writing-plans.
 manualInvoke: false
+disable-model-invocation: false
 ---
 
 # Brainstorming — Design Before Building

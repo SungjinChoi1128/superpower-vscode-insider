@@ -4,6 +4,7 @@ description: >
   Use when executing implementation plans with independent tasks in the current
   session. Breaks plan execution into isolated units with review between each.
 manualInvoke: false
+disable-model-invocation: false
 ---
 
 # Subagent-Driven Development

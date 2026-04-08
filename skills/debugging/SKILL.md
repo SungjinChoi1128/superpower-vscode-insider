@@ -5,6 +5,7 @@ description: >
   MSSQL error, or unexpected behavior. Use before proposing any fix. Systematic
   diagnosis before solution.
 manualInvoke: false
+disable-model-invocation: false
 ---
 
 # Systematic Debugging

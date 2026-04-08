@@ -5,6 +5,7 @@ description: >
   skills, or verifying skills work correctly after deployment. Use when the user
   wants to add a new workflow to the skill library.
 manualInvoke: false
+disable-model-invocation: false
 ---
 
 # Writing Skills

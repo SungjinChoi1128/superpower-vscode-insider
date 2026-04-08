@@ -6,6 +6,7 @@ description: >
   verify suggestions are correct before applying them. Two-stage review: spec
   compliance first, then code quality.
 manualInvoke: false
+disable-model-invocation: false
 ---
 
 # Receiving Code Review — Two-Stage Review Process

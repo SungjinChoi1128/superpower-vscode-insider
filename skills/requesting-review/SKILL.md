@@ -5,6 +5,7 @@ description: >
   Use before creating a PR to verify the work is complete and well-documented.
   Runs git checks and prepares the PR description.
 manualInvoke: false
+disable-model-invocation: false
 ---
 
 # Requesting Code Review

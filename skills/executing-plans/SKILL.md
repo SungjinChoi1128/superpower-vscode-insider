@@ -5,6 +5,7 @@ description: >
   review checkpoints. Use after writing-plans is complete. Executes tasks
   sequentially with verification between each task.
 manualInvoke: false
+disable-model-invocation: false
 ---
 
 # Executing Plans — Step-by-Step Implementation

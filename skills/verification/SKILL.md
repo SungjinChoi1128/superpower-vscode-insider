@@ -5,6 +5,7 @@ description: >
   committing, creating a PR, or telling the user something works. Evidence
   before assertions — run verification commands and show actual output.
 manualInvoke: false
+disable-model-invocation: false
 ---
 
 # Verification Before Completion

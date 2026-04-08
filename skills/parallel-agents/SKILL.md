@@ -5,6 +5,7 @@ description: >
   shared state or sequential dependencies. Helps decompose and parallelize
   independent work streams.
 manualInvoke: false
+disable-model-invocation: false
 ---
 
 # Dispatching Parallel Work

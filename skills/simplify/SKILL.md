@@ -5,6 +5,7 @@ description: >
   and efficiency improvements. Use after implementing a feature to check if the
   code can be simplified. Reviews for DRY, YAGNI, readability, and performance.
 manualInvoke: false
+disable-model-invocation: false
 ---
 
 # Simplify

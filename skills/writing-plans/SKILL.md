@@ -6,6 +6,7 @@ description: >
   complete. Creates bite-sized TDD tasks with exact file paths and commands.
   Required before executing-plans.
 manualInvoke: false
+disable-model-invocation: false
 ---
 
 # Writing Plans — Implementation Planning

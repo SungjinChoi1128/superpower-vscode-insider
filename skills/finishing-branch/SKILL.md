@@ -5,6 +5,7 @@ description: >
   an ADO pull request to merge the branch. Guides completion of development
   work by checking git state and presenting PR options.
 manualInvoke: false
+disable-model-invocation: false
 ---
 
 # Finishing a Development Branch

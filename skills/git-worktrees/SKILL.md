@@ -6,6 +6,7 @@ description: >
   isolated git worktree so work doesn't interfere with the current branch.
   Adapted for Azure DevOps Git repositories.
 manualInvoke: false
+disable-model-invocation: false
 ---
 
 # Using Git Worktrees

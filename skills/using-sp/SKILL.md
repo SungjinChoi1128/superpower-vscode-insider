@@ -5,6 +5,7 @@ description: >
   how to use the skill system, or how to invoke a specific skill. Also activates
   when starting any new task to check if a more specific skill applies.
 manualInvoke: false
+disable-model-invocation: false
 ---
 
 ## ⛔ CRITICAL CONSTRAINTS
