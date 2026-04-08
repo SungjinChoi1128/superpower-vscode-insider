@@ -179,146 +179,388 @@ function getPhaseReminder(state: SkillState): string {
     const config = getPhaseConfig(state.skillName, state.phase);
     if (!config) return '';
 
-    const noCodeWarning = config.noCode ? '\n⛔ DO NOT WRITE ANY CODE IN THIS PHASE' : '';
-
     const phaseMessages: Record<string, Record<string, string>> = {
         brainstorming: {
-            context: `🔒 PHASE: Explore Context (Turn ${state.turnCount}/${config.maxTurns})
-Read project files, understand current state.
-Ask ONE clarifying question.${noCodeWarning}`,
-            questions: `🔒 PHASE: Clarifying Questions (Turn ${state.turnCount}/${config.maxTurns})
-Ask exactly ONE question per message.
-Do NOT propose approaches yet.${noCodeWarning}`,
-            approaches: `🔒 PHASE: Propose Approaches (Turn ${state.turnCount}/${config.maxTurns})
-Present 2-3 approaches with trade-offs.
-Lead with your recommendation.${noCodeWarning}`,
-            design: `🔒 PHASE: Present Design (Turn ${state.turnCount}/${config.maxTurns})
-Cover: architecture, components, error handling, testing.
-Get approval on each section.${noCodeWarning}`,
-            spec: `🔒 PHASE: Write Spec Document
-Create markdown file at docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md
-Include all design decisions.${noCodeWarning}`,
-            transition: `🔒 PHASE: Transition
-Design is complete! Tell user to type: @sp /write-plan
-Do NOT start implementing.${noCodeWarning}`
+            context: `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** brainstorming
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Read project files, understand current state. Ask ONE clarifying question.
+**Do NOT:** Write code, skip to design, ask multiple questions at once
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`,
+            questions: (() => {
+                const questionsLeft = config.maxTurns - state.turnCount;
+                const shouldWrapUp = questionsLeft <= 1;
+                return `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** brainstorming
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Ask ONE focused question. Do NOT skip to design.
+**Do NOT:** Suggest solutions, write code, ask vague or compound questions
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns} - ${shouldWrapUp ? '⛔ WRAP UP - Propose approaches after this question!' : `${questionsLeft} questions remaining`}
+
+Remember: You MUST follow this skill exactly. No exceptions.`;
+            })(),
+            approaches: `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** brainstorming
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Propose 2-3 approaches with trade-offs. Lead with your recommendation.
+**Do NOT:** Write code, skip to detailed design, pick solution for user
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`,
+            design: `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** brainstorming
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Present detailed design for approval. Cover architecture, components, error handling, testing.
+**Do NOT:** Start implementing, skip sections, skip approval
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`,
+            spec: `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** brainstorming
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Create spec document at docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md
+**Do NOT:** Implement code, deviate from spec format, skip documentation
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`,
+            transition: `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** brainstorming
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Tell user to type @sp /write-plan. Do NOT start implementing.
+**Do NOT:** Write code, create files, skip telling user about next step
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`
         },
         'writing-plans': {
-            before: `🔒 PHASE: Before Writing (Turn ${state.turnCount}/${config.maxTurns})
-Read spec document. Understand git context.
-No code writing - only planning.${noCodeWarning}`,
-            writing: `🔒 PHASE: Writing Plan (Turn ${state.turnCount}/${config.maxTurns})
-Create TDD tasks with exact file paths and commands.
-Each task: 2-5 minutes, failing test → implement → verify → commit.${noCodeWarning}`,
-            after: `🔒 PHASE: Transition
-Plan complete! Tell user to type: @sp /execute-plan
-Summarize: number of tasks, estimated time.${noCodeWarning}`
+            before: `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** writing-plans
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Read spec document. Understand git context. Prepare to create TDD tasks.
+**Do NOT:** Write code, skip spec review, start implementing
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`,
+            writing: `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** writing-plans
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Create TDD tasks with exact file paths and commands. Each task: 2-5 minutes, failing test → implement → verify → commit.
+**Do NOT:** Write implementation code, skip verification steps, rush through tasks
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`,
+            after: `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** writing-plans
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Tell user to type @sp /execute-plan. Summarize number of tasks and estimated time.
+**Do NOT:** Start executing, write code, skip transition
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`
         },
         'executing-plans': {
-            before: `🔒 PHASE: Before Execution (Turn ${state.turnCount}/${config.maxTurns})
-Confirm branch. Check for uncommitted changes.
-Ask for plan file path.`,
-            executing: `🔒 PHASE: Executing Tasks (Turn ${state.turnCount}/${config.maxTurns})
-Follow steps exactly - do not skip or reorder.
-Run verification commands. Commit at end of each task.`,
-            checkpoints: `🔒 PHASE: Checkpoint (Turn ${state.turnCount}/${config.maxTurns})
-Report: what completed, test status, git log, any deviations.
-Wait for user acknowledgement before continuing.`,
-            after: `🔒 PHASE: Transition
-All tasks complete! Run full test suite.
-Tell user to type: @sp /verify`
+            before: `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** executing-plans
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Confirm branch. Check for uncommitted changes. Ask for plan file path.
+**Do NOT:** Modify files, skip checks, start implementing
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`,
+            executing: `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** executing-plans
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Follow steps exactly - do not skip or reorder. Run verification commands. Commit at end of each task.
+**Do NOT:** Skip steps, reorder tasks, skip verification, skip commits
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`,
+            checkpoints: `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** executing-plans
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Report what completed, test status, git log, any deviations. Wait for user acknowledgement before continuing.
+**Do NOT:** Skip reporting, continue without acknowledgement, skip git log
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`,
+            after: `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** executing-plans
+**Current Phase:** ${state.phase}
+**Your Exact Task:** All tasks complete! Run full test suite. Tell user to type: @sp /verify
+**Do NOT:** Skip test suite, skip verification, declare complete without testing
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`
         },
         tdd: {
-            before: `🔒 PHASE: Before TDD (Turn ${state.turnCount}/${config.maxTurns})
-Find existing tests. Understand testing patterns.
-Identify test framework configuration.`,
-            red: `🔒 PHASE: RED - Write Failing Test (Turn ${state.turnCount}/${config.maxTurns})
-Write test describing ONE behavior.
-Run it - verify it fails with expected error (not import error).${noCodeWarning}`,
-            green: `🔒 PHASE: GREEN - Make It Pass (Turn ${state.turnCount}/${config.maxTurns})
-Write MINIMAL implementation to make test pass.
-Run test - verify it passes.`,
-            refactor: `🔒 PHASE: REFACTOR - Improve Code (Turn ${state.turnCount}/${config.maxTurns})
-Improve code quality while keeping tests green.
-Commit after refactor cycle.`
+            before: `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** tdd
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Find existing tests. Understand testing patterns. Identify test framework configuration.
+**Do NOT:** Write implementation code, skip test exploration, skip patterns review
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`,
+            red: `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** tdd
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Write test describing ONE behavior. Run it - verify it fails with expected error (not import error).
+**Do NOT:** Write implementation code, write multiple tests, skip running tests
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`,
+            green: `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** tdd
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Write MINIMAL implementation to make test pass. Run test - verify it passes.
+**Do NOT:** Over-implement, add extra features, skip test verification
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`,
+            refactor: `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** tdd
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Improve code quality while keeping tests green. Commit after refactor cycle.
+**Do NOT:** Add new features, skip tests, skip commits
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`
         },
         debugging: {
-            reproduce: `🔒 PHASE: Reproduce (Turn ${state.turnCount}/${config.maxTurns})
-Reproduce error in simplest possible way.
-Find exact failing step and input.${noCodeWarning}`,
-            'read-error': `🔒 PHASE: Read Full Error (Turn ${state.turnCount}/${config.maxTurns})
-Read complete error message and stack trace.
-For Spark: scroll past "Caused by" to root cause.${noCodeWarning}`,
-            hypothesis: `🔒 PHASE: Form Hypothesis (Turn ${state.turnCount}/${config.maxTurns})
-State hypothesis explicitly: "I think error is X because Y."${noCodeWarning}`,
-            verify: `🔒 PHASE: Verify Hypothesis (Turn ${state.turnCount}/${config.maxTurns})
-Check with smallest change: print/log, inspect data, check schema.
-For PySpark: df.printSchema(), df.show(5), df.filter().count()`,
-            fix: `🔒 PHASE: Fix (Turn ${state.turnCount}/${config.maxTurns})
-Make minimal fix addressing ROOT cause.
-Do NOT fix symptoms.`,
-            'verify-fix': `🔒 PHASE: Verify Fix (Turn ${state.turnCount}/${config.maxTurns})
-Run failing test again - confirm it passes.
-Run full test suite - confirm nothing broke.`,
-            commit: `🔒 PHASE: Commit
-Commit with message explaining root cause:
-"fix: handle null X in transformation\n\nRoot cause: Y"`
+            reproduce: `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** debugging
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Reproduce error in simplest possible way. Find exact failing step and input.
+**Do NOT:** Guess at root cause, skip reproduction, implement fixes
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`,
+            'read-error': `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** debugging
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Read complete error message and stack trace. For Spark: scroll past "Caused by" to root cause.
+**Do NOT:** Skip error reading, guess at fix, skip stack trace analysis
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`,
+            hypothesis: `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** debugging
+**Current Phase:** ${state.phase}
+**Your Exact Task:** State hypothesis explicitly: "I think error is X because Y."
+**Do NOT:** Implement fix without hypothesis, skip hypothesis formation, guess randomly
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`,
+            verify: `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** debugging
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Check with smallest change: print/log, inspect data, check schema. For PySpark: df.printSchema(), df.show(5), df.filter().count()
+**Do NOT:** Make big changes, skip verification, implement without checking
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`,
+            fix: `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** debugging
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Make minimal fix addressing ROOT cause. Do NOT fix symptoms.
+**Do NOT:** Add workarounds, skip root cause, add unrelated changes
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`,
+            'verify-fix': `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** debugging
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Run failing test again - confirm it passes. Run full test suite - confirm nothing broke.
+**Do NOT:** Skip tests, skip full suite, declare complete without verification
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`,
+            commit: `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** debugging
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Commit with message explaining root cause: "fix: handle null X in transformation\n\nRoot cause: Y"
+**Do NOT:** Commit without explanation, skip commit, use generic message
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`
         },
         verification: {
-            before: `🔒 PHASE: Before Verification (Turn ${state.turnCount}/${config.maxTurns})
-Check git status. Show uncommitted changes if any.`,
-            'definition-of-done': `🔒 PHASE: Definition of Done
-Work is complete when ALL checked:
-☐ All tests pass (output shown, not summarized)
-☐ No linting errors
-☐ Data quality assertions pass
-☐ Git status clean
-☐ Specific behavior works as described`
+            before: `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** verification
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Check git status. Show uncommitted changes if any.
+**Do NOT:** Skip git status, declare complete with uncommitted changes, modify files
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`,
+            'definition-of-done': `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** verification
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Work is complete when ALL checked: ☐ All tests pass (output shown, not summarized) ☐ No linting errors ☐ Data quality assertions pass ☐ Git status clean ☐ Specific behavior works as described
+**Do NOT:** Skip any checklist item, summarize test output, skip verification commands
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`
         },
         'requesting-review': {
-            before: `🔒 PHASE: Before Review (Turn ${state.turnCount}/${config.maxTurns})
-Git context: branch, commits since main, status.
-All tests must pass first.`,
-            'self-review': `🔒 PHASE: Self-Review Checklist (Turn ${state.turnCount}/${config.maxTurns})
-PySpark/Python: clear responsibilities, error handling, no hardcoded values, tests cover behavior
-SQL: no SELECT *, explicit joins, NULL handling, indexes considered
-DAB/YAML: bundle validate passes, correct targets, no hardcoded paths
-Azure Pipelines: runs successfully, correct connections, correct paths`,
-            'draft-pr': `🔒 PHASE: Draft PR Description
-Include: Summary (what/why), Test Plan (commands/output)`
+            before: `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** requesting-review
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Git context: branch, commits since main, status. All tests must pass first.
+**Do NOT:** Submit without tests passing, skip git context, skip branch review
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`,
+            'self-review': `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** requesting-review
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Self-review checklist: PySpark/Python: clear responsibilities, error handling, no hardcoded values, tests cover behavior | SQL: no SELECT *, explicit joins, NULL handling, indexes considered | DAB/YAML: bundle validate passes, correct targets, no hardcoded paths | Azure Pipelines: runs successfully, correct connections, correct paths
+**Do NOT:** Skip checklist items, skip self-review, submit with issues
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`,
+            'draft-pr': `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** requesting-review
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Draft PR with: Summary (what/why), Test Plan (commands/output)
+**Do NOT:** Submit without test plan, skip summary, use vague descriptions
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`
         },
         'receiving-review': {
-            'stage-1': `🔒 PHASE: Stage 1 - Spec Compliance Review (Turn ${state.turnCount}/${config.maxTurns})
-FIRST: Read spec from docs/superpowers/specs/
-Categorize each comment: Spec Violation (fix), Code Quality (verify), Suggestion (optional), Disagree (discuss)
-Fix ALL spec violations before Stage 2.${noCodeWarning}`,
-            'stage-2': `🔒 PHASE: Stage 2 - Code Quality Review (Turn ${state.turnCount}/${config.maxTurns})
-After spec violations resolved:
-☐ DRY - duplicated logic?
-☐ YAGNI - handling impossible scenarios?
-☐ Readability - clear names, no magic numbers?
-☐ Edge cases - null handling covered?${noCodeWarning}`,
-            response: `🔒 PHASE: Response (Turn ${state.turnCount}/${config.maxTurns})
-Reply to each comment with: "Done - [what fixed]", "Discussed - [reasoning]", "Deferring - [reason]", or "Spec change needed"
-Run full test suite before marking ready.${noCodeWarning}`
+            'stage-1': `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** receiving-review
+**Current Phase:** ${state.phase}
+**Your Exact Task:** FIRST: Read spec from docs/superpowers/specs/ | Categorize each comment: Spec Violation (fix), Code Quality (verify), Suggestion (optional), Disagree (discuss) | Fix ALL spec violations before Stage 2
+**Do NOT:** Skip spec reading, skip categorization, skip spec violations
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`,
+            'stage-2': `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** receiving-review
+**Current Phase:** ${state.phase}
+**Your Exact Task:** After spec violations resolved: ☐ DRY - duplicated logic? ☐ YAGNI - handling impossible scenarios? ☐ Readability - clear names, no magic numbers? ☐ Edge cases - null handling covered?
+**Do NOT:** Skip checklist items, skip stage 2, rush through review
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`,
+            response: `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** receiving-review
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Reply to each comment with: "Done - [what fixed]", "Discussed - [reasoning]", "Deferring - [reason]", or "Spec change needed" | Run full test suite before marking ready
+**Do NOT:** Skip replies, skip test suite, skip any comment
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`
         },
         'finishing-branch': {
-            before: `🔒 PHASE: Before PR (Turn ${state.turnCount}/${config.maxTurns})
-Confirm: commits on branch, no uncommitted changes, all tests pass.
-Run @sp /verify first.`,
-            'squash-decision': `🔒 PHASE: Squash Decision (Turn ${state.turnCount}/${config.maxTurns})
-Review git log --oneline main..HEAD
-Clean story → keep commits
-Messy/WIP commits → consider squashing
-In doubt → keep individual commits`,
-            'create-pr': `🔒 PHASE: Create PR (Turn ${state.turnCount}/${config.maxTurns})
-Push: git push -u origin <branch>
-Title: <type>: <what changed>
-Description: Summary, Test Plan, Notes for Reviewer
-Link ADO work item.`,
-            after: `🔒 PHASE: After PR
-Move ADO work item to "In Review"
-Notify reviewers if required
-Tell user: When feedback arrives, type @sp /receive-review`
+            before: `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** finishing-branch
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Confirm: commits on branch, no uncommitted changes, all tests pass. Run @sp /verify first.
+**Do NOT:** Skip verification, skip checks, proceed with uncommitted changes
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`,
+            'squash-decision': `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** finishing-branch
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Review git log --oneline main..HEAD | Clean story → keep commits | Messy/WIP commits → consider squashing | In doubt → keep individual commits
+**Do NOT:** Skip log review, force squash without reason, skip decision
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`,
+            'create-pr': `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** finishing-branch
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Push: git push -u origin <branch> | Title: <type>: <what changed> | Description: Summary, Test Plan, Notes for Reviewer | Link ADO work item.
+**Do NOT:** Skip ADO link, skip test plan in description, use vague title
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`,
+            after: `## ⛔⛔⛔ ACTIVE SKILL ENFORCEMENT ⛔⛔⛔
+
+**Skill:** finishing-branch
+**Current Phase:** ${state.phase}
+**Your Exact Task:** Move ADO work item to "In Review" | Notify reviewers if required | Tell user: When feedback arrives, type @sp /receive-review
+**Do NOT:** Skip ADO update, skip notification, skip next steps explanation
+**If user asks for code:** REFUSE with "No code in ${state.phase} phase"
+**Progress:** ${state.turnCount}/${config.maxTurns}
+
+Remember: You MUST follow this skill exactly. No exceptions.`
         }
     };
 
