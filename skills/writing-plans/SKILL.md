@@ -80,10 +80,12 @@ Do NOT execute any code or implementation until the plan is complete.
 **Purpose:** Understand the spec and project state before writing the plan.
 
 **What to do:**
-1. Read the spec document at `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`
-2. Check git context: current branch, recent commits
-3. List existing relevant files in the codebase
-4. Display summary to user
+1. **First, check if specFilePath is available in state** — if the user invoked `@sp /write-plan` after `@sp /brainstorm`, the spec path may have been stored in state. If available, use that path directly.
+2. If specFilePath is NOT in state, ask the user: "What is the path to your spec document?"
+3. Read the spec document at the determined path (e.g., `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`)
+4. Check git context: current branch, recent commits
+5. List existing relevant files in the codebase
+6. Display summary to user
 
 **Output format — you MUST produce exactly:**
 ```

@@ -154,25 +154,31 @@ function isNoCodePhase(skillName, phase) {
 // Code keywords that indicate user is requesting code generation
 const CODE_KEYWORDS = ['function', 'def', 'class', 'import', 'implement', 'build', 'create_file', 'write_file', 'write code', 'generate code', 'show me code'];
 function preprocessUserPrompt(prompt, state) {
-    // Check if any code keyword exists in the prompt (case insensitive)
     const promptLower = prompt.toLowerCase();
     const hasCodeKeyword = CODE_KEYWORDS.some(keyword => promptLower.includes(keyword));
-    // Check if currently in a no-code phase
     const inNoCodePhase = isNoCodePhase(state.skillName, state.phase);
-    // If both conditions are true, block the request
     if (hasCodeKeyword && inNoCodePhase) {
-        return {
-            blocked: true,
-            prompt: `BLOCKED: User requested code generation during "${state.phase}" phase. This is forbidden. User message was: ${prompt}`
-        };
+        return `⚠️ WARNING: You appear to be requesting code in ${state.phase} phase. DO NOT generate code yet.\n\n${prompt}`;
     }
-    return { blocked: false, prompt };
+    return prompt;
 }
 function shouldAdvancePhase(state) {
     const config = getPhaseConfig(state.skillName, state.phase);
     if (!config)
         return false;
     return state.turnCount >= config.maxTurns;
+}
+// Extract spec file path from prompt (format: docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md)
+function extractSpecFilePath(prompt) {
+    const specPattern = /docs\/superpowers\/specs\/[\d]{4}-[\d]{2}-[\d]{2}-[a-zA-Z0-9-_]+\.md/;
+    const match = prompt.match(specPattern);
+    return match ? match[0] : undefined;
+}
+// Extract plan file path from prompt (format: docs/superpowers/plans/YYYY-MM-DD-<feature>.md)
+function extractPlanFilePath(prompt) {
+    const planPattern = /docs\/superpowers\/plans\/[\d]{4}-[\d]{2}-[\d]{2}-[a-zA-Z0-9-_]+\.md/;
+    const match = prompt.match(planPattern);
+    return match ? match[0] : undefined;
 }
 function getPhaseReminder(state) {
     const config = getPhaseConfig(state.skillName, state.phase);
@@ -387,8 +393,11 @@ function registerSpParticipant(context, skillsRoot) {
                 }
             }
         }
-        // Write active skill file with state
-        writeActiveSkillFile(skillName, 'sp.assistant', currentState || undefined);
+        // Extract file paths from prompt if mentioned
+        const specPathFromPrompt = extractSpecFilePath(request.prompt);
+        const planPathFromPrompt = extractPlanFilePath(request.prompt);
+        // Write active skill file with state and extracted paths
+        writeActiveSkillFile(skillName, 'sp.assistant', currentState || undefined, specPathFromPrompt, planPathFromPrompt);
         // Run git commands to get project context
         const gitContext = await getGitContext();
         const memoryContent = loadMemory(getMemoryRoot());
@@ -402,55 +411,27 @@ function registerSpParticipant(context, skillsRoot) {
                 ? `🔒 You are in the middle of the "${skillName}" skill.\n\n${getPhaseReminder(currentState)}\n\nContinue from where you left off.`
                 : `🔒 You are in the middle of the "${skillName}" skill. Continue from where you left off.`;
             // Apply input pre-processing: check for code keywords in no-code phases
-            const preprocessed = currentState
+            const preprocessedPrompt = currentState
                 ? preprocessUserPrompt(request.prompt, currentState)
-                : { blocked: false, prompt: request.prompt };
-            // Check if blocked - return error without calling LLM
-            if (preprocessed.blocked) {
-                const state = currentState;
-                stream.markdown(`## ⛔ Blocked
-
-${preprocessed.prompt}
-
-**Current phase:** ${state.phase}
-**Skill:** ${state.skillName}
-**Turn:** ${state.turnCount}/${getPhaseConfig(state.skillName, state.phase)?.maxTurns || '?'}
-
-Please continue with the current phase task, or use \`@sp /reset\` to start over.`);
-                return;
-            }
+                : request.prompt;
             messages = [
                 // System context with skill instructions (re-injected for follow-ups)
                 vscode.LanguageModelChatMessage.User(`${memoryContent}\n\n---\n\n## Project Context\n\n${gitContext}\n\n---\n\nYou are following the "${skillName}" skill. Here are the skill instructions:\n\n${skillContent}\n\n---\n\n${continuationReminder}`),
                 // Convert conversation history to LanguageModelChatMessage
                 ...convertHistoryToMessages(chatContext.history),
                 // Current user message
-                vscode.LanguageModelChatMessage.User(preprocessed.prompt)
+                vscode.LanguageModelChatMessage.User(preprocessedPrompt)
             ];
         }
         else {
             // First turn: full context with skill and user request
             const phaseReminder = currentState ? getPhaseReminder(currentState) : '';
             // Apply input pre-processing: check for code keywords in no-code phases
-            const preprocessed = currentState
+            const preprocessedPrompt = currentState
                 ? preprocessUserPrompt(request.prompt, currentState)
-                : { blocked: false, prompt: request.prompt };
-            // Check if blocked - return error without calling LLM
-            if (preprocessed.blocked) {
-                const state = currentState;
-                stream.markdown(`## ⛔ Blocked
-
-${preprocessed.prompt}
-
-**Current phase:** ${state.phase}
-**Skill:** ${state.skillName}
-**Turn:** ${state.turnCount}/${getPhaseConfig(state.skillName, state.phase)?.maxTurns || '?'}
-
-Please continue with the current phase task, or use \`@sp /reset\` to start over.`);
-                return;
-            }
+                : request.prompt;
             messages = [
-                vscode.LanguageModelChatMessage.User(`${memoryContent}\n\n---\n\n## Project Context\n\n${gitContext}\n\n---\n\nYou are following the "${skillName}" skill. Here are the skill instructions:\n\n${skillContent}${phaseReminder ? '\n\n---\n\n' + phaseReminder : ''}\n\n---\n\nUser request: ${preprocessed.prompt}`)
+                vscode.LanguageModelChatMessage.User(`${memoryContent}\n\n---\n\n## Project Context\n\n${gitContext}\n\n---\n\nYou are following the "${skillName}" skill. Here are the skill instructions:\n\n${skillContent}${phaseReminder ? '\n\n---\n\n' + phaseReminder : ''}\n\n---\n\nUser request: ${preprocessedPrompt}`)
             ];
         }
         const response = await models[0].sendRequest(messages, {}, token);
@@ -500,11 +481,13 @@ function convertHistoryToMessages(history) {
 function getMemoryRoot() {
     return path.join(getCopilotRoot(), 'memory');
 }
-function writeActiveSkillFile(skillName, participantId, state) {
+function writeActiveSkillFile(skillName, participantId, state, specFilePath, planFilePath) {
     const copilotRoot = getCopilotRoot();
     if (!fs.existsSync(copilotRoot)) {
         fs.mkdirSync(copilotRoot, { recursive: true });
     }
+    // Load existing data to preserve file paths if not explicitly provided
+    const existingData = loadActiveSkillFile();
     const activeSkillData = {
         skill: skillName,
         timestamp: new Date().toISOString(),
@@ -515,7 +498,10 @@ function writeActiveSkillFile(skillName, participantId, state) {
             turnCount: state.turnCount,
             totalTurns: state.totalTurns,
             startedAt: state.startedAt
-        })
+        }),
+        // Preserve existing paths or use provided ones
+        specFilePath: specFilePath ?? existingData?.specFilePath,
+        planFilePath: planFilePath ?? existingData?.planFilePath
     };
     const activeSkillPath = path.join(copilotRoot, 'active-skill.json');
     fs.writeFileSync(activeSkillPath, JSON.stringify(activeSkillData, null, 2), 'utf-8');

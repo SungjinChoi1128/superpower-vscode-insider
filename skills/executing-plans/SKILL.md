@@ -96,10 +96,12 @@ Do NOT skip steps. Do NOT mark incomplete work as done.
 
 2. Confirm you are on the correct branch. Confirm no uncommitted changes.
 
-3. Ask: **"What is the path to the implementation plan you want to execute?"**
+3. **First, check if planFilePath is available in state** — if the user invoked `@sp /execute-plan` after `@sp /write-plan`, the plan path may have been stored in state. If available, use that path directly.
+   
+4. If planFilePath is NOT in state, ask: **"What is the path to the implementation plan you want to execute?"**
    (e.g., `docs/superpowers/plans/2026-04-06-my-feature.md`)
 
-4. Read the plan document in full before proceeding.
+5. Read the plan document in full before proceeding.
 
 **Phase Transition:** After plan is loaded and confirmed, proceed to Phase 2.
 
