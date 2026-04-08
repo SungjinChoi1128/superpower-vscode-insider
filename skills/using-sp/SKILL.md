@@ -7,6 +7,12 @@ description: >
 manualInvoke: false
 ---
 
+## ⛔ CRITICAL CONSTRAINTS
+
+1. **This is an informational skill** - It guides users to appropriate skills, but does not execute work directly
+2. **Always route to specific skills** - After identifying the right skill, delegate to it rather than attempting the work here
+3. **Never bypass skill workflows** - Do not provide ad-hoc implementations when a skill exists for that task
+
 # SP Superpowers
 
 This system provides structured workflow skills for software engineering tasks.

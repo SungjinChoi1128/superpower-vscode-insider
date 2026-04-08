@@ -29,7 +29,10 @@
           { "name": "finish-branch", "description": "Complete branch and create ADO PR" },
           { "name": "worktree", "description": "Isolate work with git worktrees" },
           { "name": "write-skill", "description": "Create a new skill" },
-          { "name": "simplify", "description": "Review code for quality" }
+          { "name": "simplify", "description": "Review code for quality" },
+          { "name": "phase", "description": "Show current skill phase and turn count" },
+          { "name": "state", "description": "Show full skill state JSON for debugging" },
+          { "name": "reset", "description": "Clear active skill state and start fresh" }
         ]
       }
     ],

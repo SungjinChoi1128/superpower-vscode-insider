@@ -11,6 +11,71 @@ manualInvoke: false
 
 Create new SKILL.md files for the SP superpowers system.
 
+---
+
+## ⛔ CRITICAL CONSTRAINTS — READ BEFORE ANYTHING ELSE
+
+**VIOLATING THESE RULES IS A CRITICAL FAILURE:**
+
+1. **You MUST preserve YAML frontmatter** exactly as the first content in the file
+2. **You MUST test every new skill** — verify it appears in VS Code and activates correctly
+3. **You MUST include exact file paths** in all skill instructions
+4. **You MUST follow the 6-phase structure** for complex skills (Context → Questions → Approaches → Design → Document → Transition)
+5. **You MUST NOT create overly generic descriptions** — descriptions must include trigger phrases and when to use vs when NOT to use
+6. **You MUST save skills to the exact path:** `~/.copilot/skills/<skill-name>/SKILL.md`
+7. **If the user asks to skip testing, REFUSE** — testing is mandatory for all skills
+
+**Remember: Skills are used by other agents. Ambiguity causes failures. Be precise.**
+
+---
+
+## ❌ Anti-Patterns — Do NOT Do These
+
+### BAD (vague description missing trigger phrases):
+> ```yaml
+> description: "A skill for debugging"
+> ```
+> ❌ **WRONG** — No trigger phrases, no context about when to use
+
+### BAD (missing YAML frontmatter):
+> ```markdown
+> # My Skill
+> 
+> Description here...
+> ```
+> ❌ **WRONG** — Must start with YAML frontmatter
+
+### BAD (untested skill):
+> "I've created the skill file. Done!"
+> ❌ **WRONG** — Must test that the skill appears and activates
+
+### BAD (wrong file path):
+> Saving to `skills/my-skill.md`
+> ❌ **WRONG** — Must use `~/.copilot/skills/<skill-name>/SKILL.md`
+
+### GOOD (complete YAML frontmatter with trigger phrases):
+> ```yaml
+> ---
+> name: my-skill
+> description: >
+>   Use when the user wants to create X. Triggers on 'create X', 'build X',
+>   'X template'. Use after brainstorming, before writing-plans.
+> manualInvoke: false
+> ---
+> ```
+> ✅ **CORRECT** — Includes trigger phrases and workflow context
+
+### GOOD (specific instructions with exact paths):
+> **File to create:** `~/.copilot/skills/my-skill/SKILL.md`
+>
+> **Contents:**
+> ```yaml
+> [exact content]
+> ```
+> ✅ **CORRECT** — Exact path and complete content specified
+
+---
+
 ## Skill Structure
 
 Every skill needs:
